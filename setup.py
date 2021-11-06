@@ -19,6 +19,7 @@ setup(
     long_description=read('README.md'),
     install_requires=[
         'websockets',
-        'aiohttp'
+        'aiohttp',
+        'gpxpy'
     ]
 )
