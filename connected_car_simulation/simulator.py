@@ -35,8 +35,13 @@ if __name__ == '__main__':
     webserver = WebServer(simulation_environment, '0.0.0.0', 8080)
     webserver.start()
 
+    print('Connected Car Simulation started!')
+    print('Open http://localhost:8080/static/index.html in your browser.')
+
     loop = asyncio.get_event_loop()
     taskOne = loop.create_task(simulation_updater_and_publisher(simulation_environment, websocket))
     loop.run_until_complete(asyncio.wait([taskOne]))
+
+
 
     loop.run_forever()
