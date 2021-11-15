@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg:svg
+   version="1.0"
+   width="110"
+   height="310"
+   id="svg932"
+   sodipodi:docname="traffic_light_red.svg"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview934"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="1.439759"
+     inkscape:cx="183.36402"
+     inkscape:cy="201.76987"
+     inkscape:window-width="2556"
+     inkscape:window-height="1395"
+     inkscape:window-x="2560"
+     inkscape:window-y="1098"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg932" />
+  <link
+     type="text/css"
+     rel="stylesheet"
+     id="dark-mode-custom-link" />
+  <link
+     type="text/css"
+     rel="stylesheet"
+     id="dark-mode-general-link" />
+  <style
+     lang="en"
+     type="text/css"
+     id="dark-mode-custom-style" />
+  <style
+     lang="en"
+     type="text/css"
+     id="dark-mode-native-style" />
+  <svg:defs
+     id="defs896" />
+  <svg:g
+     id="g1270"
+     transform="translate(-5,-5)">
+    <svg:rect
+       x="10"
+       y="10"
+       width="100"
+       height="300"
+       rx="10"
+       ry="10"
+       stroke-width="10"
+       stroke="#000000"
+       id="rect898" />
+    <svg:circle
+       r="40"
+       fill="#ff0000"
+       cx="60"
+       cy="60"
+       id="circle900" />
+    <svg:circle
+       r="40"
+       fill="#808080"
+       cx="60"
+       cy="160"
+       id="circle902" />
+    <svg:circle
+       r="40"
+       fill="#808080"
+       cx="60"
+       cy="260"
+       id="circle904" />
+  </svg:g>
+</svg:svg>

@@ -1,0 +1,48 @@
+<ConnectedCarSimulationConfig>
+
+    <Vehicle>
+        <MaxVelocity>130</MaxVelocity> <!-- km/h -->
+        <MaxAcceleration>10</MaxAcceleration> <!-- m/s^2 -->
+        <RadioRange>200</RadioRange> <!-- m -->
+    </Vehicle>
+
+    <TrafficLights>
+
+        <!-- Additional Traffic Lights for testing purposes-->
+        <TrafficLight position_on_track="185" period="30" ratio="0.5"/>
+        <TrafficLight position_on_track="400" period="30" ratio="0.5"/>
+        <TrafficLight position_on_track="885" period="30" ratio="0.5"/>
+        <TrafficLight position_on_track="1160" period="30" ratio="0.5"/>
+
+        <!-- Real Traffic Lights-->
+        <TrafficLight position_on_track="645" period="30" ratio="0.5"/>
+        <TrafficLight position_on_track="1490" period="20" ratio="0.5"/>
+        <TrafficLight position_on_track="37940" period="20" ratio="0.5"/>
+        <TrafficLight position_on_track="38420" period="20" ratio="0.5"/>
+        <TrafficLight position_on_track="38650" period="20" ratio="0.5"/>
+        <TrafficLight position_on_track="39160" period="20" ratio="0.5"/>
+        <TrafficLight position_on_track="39345" period="20" ratio="0.5"/>
+        <TrafficLight position_on_track="39570" period="20" ratio="0.5"/>
+        <TrafficLight position_on_track="39725" period="20" ratio="0.5"/>
+        <TrafficLight position_on_track="39950" period="20" ratio="0.5"/>
+        <TrafficLight position_on_track="40150" period="20" ratio="0.5"/>
+        <TrafficLight position_on_track="40330" period="20" ratio="0.5"/>
+    </TrafficLights>
+    
+    <SpeedLimits>
+        <SpeedLimit start="0" end="1500" limit="50"/>
+        <SpeedLimit start="1501" end="2260" limit="70"/>
+        <SpeedLimit start="2261" end="3200" limit="80"/>
+        <SpeedLimit start="3201" end="4000" limit="100"/>
+        <SpeedLimit start="4001" end="6500" limit="120"/>
+        <SpeedLimit start="6501" end="7500" limit="100"/>
+        <SpeedLimit start="7501" end="7800" limit="80"/>
+        <SpeedLimit start="7801" end="34900" limit="120"/>
+        <SpeedLimit start="34901" end="35200" limit="80"/>
+        <SpeedLimit start="35201" end="37900" limit="100"/>
+        <SpeedLimit start="37901" end="38450" limit="70"/>
+        <SpeedLimit start="38451" end="40360" limit="50"/>
+        <SpeedLimit start="40361" end="40510" limit="30"/>
+    </SpeedLimits>
+    
+</ConnectedCarSimulationConfig>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="29.104166mm"
+   height="82.020836mm"
+   viewBox="0 0 29.104166 82.020836"
+   version="1.1"
+   id="svg1351"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
+   sodipodi:docname="traffic_light_yellow.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1353"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="0.56123737"
+     inkscape:cx="238.75816"
+     inkscape:cy="478.4072"
+     inkscape:window-width="2556"
+     inkscape:window-height="1395"
+     inkscape:window-x="2560"
+     inkscape:window-y="1098"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1348" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-42.019346,-21.689584)">
+    <g
+       id="g1282"
+       transform="matrix(0.26458333,0,0,0.26458333,-38.67857,20.366667)">
+      <rect
+         x="310"
+         y="10"
+         width="100"
+         height="300"
+         rx="10"
+         ry="10"
+         stroke-width="10"
+         stroke="#000000"
+         id="rect920" />
+      <circle
+         r="40"
+         fill="#808080"
+         cx="360"
+         cy="60"
+         id="circle922" />
+      <circle
+         r="40"
+         fill="#ffff00"
+         cx="360"
+         cy="160"
+         id="circle924" />
+      <circle
+         r="40"
+         fill="#808080"
+         cx="360"
+         cy="260"
+         id="circle926" />
+    </g>
+  </g>
+</svg>

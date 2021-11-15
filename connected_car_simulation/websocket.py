@@ -2,8 +2,7 @@ import json
 import asyncio
 import websockets
 from websockets.server import WebSocketServerProtocol
-from gpxpy.gpx import GPXTrackPoint
-from typing import Optional
+from typing import Optional, List, Dict
 
 
 class Websocket:
@@ -26,10 +25,11 @@ class Websocket:
         print('handler stopped')
         self.websocket = None
 
-    async def publish_position(self, position: GPXTrackPoint) -> None:
+    async def publish_simulation_state(self, simulation_state: Dict) -> None:
         if self.websocket is not None:
-            pt = {
-                "lon": position.longitude,
-                "lat": position.latitude,
+            obj = {
+                "simulation_state": simulation_state
             }
-            await self.websocket.send(json.dumps(pt))
+            json_dump = json.dumps(obj)
+            await self.websocket.send(json_dump)
+
