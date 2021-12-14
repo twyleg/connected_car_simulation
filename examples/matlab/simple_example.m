@@ -7,11 +7,13 @@ while 1
     
     if size(input.traffic_lights)
     
+        current_velocity = input.vehicle_state.current_velocity;
         vehicle_position_on_route = input.vehicle_state.position_on_route;
         next_traffic_light_position = input.traffic_lights(1).position_on_route;
         
         distance_to_next_traffic_light = next_traffic_light_position - vehicle_position_on_route;
         fprintf('Distance to next traffic light: %f\n\r', distance_to_next_traffic_light)
+        fprintf('Current velocity: %f\n\r', current_velocity)
         
         if input.traffic_lights(1).state == "red" && distance_to_next_traffic_light < 30
             set_vehicle_output(0.0, 8.0);
