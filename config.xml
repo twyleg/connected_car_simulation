@@ -44,5 +44,16 @@
         <SpeedLimit start="38451" end="40360" limit="50"/>
         <SpeedLimit start="40361" end="40510" limit="30"/>
     </SpeedLimits>
+
+    <SpeedLimitLightSignals>
+        <SpeedLimitLightSignal position_on_track="7805" limit="80"/>
+        <SpeedLimitLightSignal position_on_track="8575" limit="-1"/>
+
+        <SpeedLimitLightSignal position_on_track="13911" limit="80"/>
+        <SpeedLimitLightSignal position_on_track="15632" limit="-1"/>
+
+        <SpeedLimitLightSignal position_on_track="24208" limit="80"/>
+        <SpeedLimitLightSignal position_on_track="26147" limit="-1"/>
+    </SpeedLimitLightSignals>
     
 </ConnectedCarSimulationConfig>
