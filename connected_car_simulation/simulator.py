@@ -1,5 +1,7 @@
 import asyncio
+import signal
 import xml.etree.ElementTree as ET
+from contextlib import suppress
 
 from simulation_environment import SimulationEnvironment
 from websocket import Websocket
@@ -20,8 +22,7 @@ def read_config(config_file_path: str) -> Dict:
     return tree.getroot()
 
 
-if __name__ == '__main__':
-
+async def main() -> None:
     config = read_config('config.xml')
 
     simulation_environment = SimulationEnvironment(route_file_path='static/routes/ostfalia-wf-wob.gpx',
@@ -30,18 +31,37 @@ if __name__ == '__main__':
     simulation_environment.vehicle.set_target_velocity_in_kmh(0.0)
 
     websocket = Websocket('0.0.0.0', 8081)
-    websocket.start()
+    await websocket.start()
 
     webserver = WebServer(simulation_environment, '0.0.0.0', 8080)
-    webserver.start()
+    await webserver.start()
 
     print('Connected Car Simulation started!')
     print('Open http://localhost:8080/static/index.html in your browser.')
 
-    loop = asyncio.get_event_loop()
-    taskOne = loop.create_task(simulation_updater_and_publisher(simulation_environment, websocket))
-    loop.run_until_complete(asyncio.wait([taskOne]))
+    updater_task = asyncio.create_task(
+        simulation_updater_and_publisher(simulation_environment, websocket)
+    )
+    stop_event = asyncio.Event()
+    loop = asyncio.get_running_loop()
 
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        try:
+            loop.add_signal_handler(sig, stop_event.set)
+        except NotImplementedError:
+            pass
 
+    try:
+        await stop_event.wait()
+    finally:
+        updater_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await updater_task
+        await websocket.stop()
+        await webserver.stop()
 
-    loop.run_forever()
+if __name__ == '__main__':
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass

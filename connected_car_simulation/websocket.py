@@ -1,21 +1,29 @@
 import json
-import asyncio
 import websockets
-from websockets.server import WebSocketServerProtocol
-from typing import Optional, Dict
+from typing import Any, Dict, Optional
 
 
 class Websocket:
 
     def __init__(self, hostname: str, port: int):
-        self.websocket_coroutine = websockets.serve(self.websocket_handler, hostname, port)
-        self.websocket: Optional[WebSocketServerProtocol] = None
+        self.hostname = hostname
+        self.port = port
+        self.server = None
+        self.websocket: Optional[Any] = None
 
-    def start(self) -> None:
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.websocket_coroutine)
+    async def start(self) -> None:
+        self.server = await websockets.serve(self.websocket_handler, self.hostname, self.port)
 
-    async def websocket_handler(self, websocket: WebSocketServerProtocol, path: str) -> None:
+    async def stop(self) -> None:
+        if self.websocket is not None:
+            await self.websocket.close()
+            self.websocket = None
+        if self.server is not None:
+            self.server.close()
+            await self.server.wait_closed()
+            self.server = None
+
+    async def websocket_handler(self, websocket: Any) -> None:
         print('Websocket connected!')
         self.websocket = websocket
         async for message in websocket:
@@ -32,4 +40,3 @@ class Websocket:
             }
             json_dump = json.dumps(obj)
             await self.websocket.send(json_dump)
-

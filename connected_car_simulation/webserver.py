@@ -1,4 +1,3 @@
-import asyncio
 import pathlib
 import os
 import json
@@ -13,6 +12,8 @@ class WebServer:
 
     def __init__(self, simulation_environment: SimulationEnvironment, hostname: str, port: int) -> None:
         self.simulation_environment = simulation_environment
+        self.hostname = hostname
+        self.port = port
         self.app = web.Application()
         self.app.router.add_get('/api/set_vehicle_output', self.set_vehicle_output_handler)
         self.app.router.add_get('/api/set_vehicle_position', self.set_vehicle_position_handler)
@@ -23,14 +24,17 @@ class WebServer:
         self.app.router.add_static('/static/',
                               path=ROOT_DIR / 'static',
                               name='static')
+        self.runner = web.AppRunner(self.app)
+        self.site = None
 
-        runner = web.AppRunner(self.app)
-        asyncio.get_event_loop().run_until_complete(runner.setup())
-        site = web.TCPSite(runner, hostname, port)
-        self.webserver_coroutine = site.start()
+    async def start(self) -> None:
+        await self.runner.setup()
+        self.site = web.TCPSite(self.runner, self.hostname, self.port)
+        await self.site.start()
 
-    def start(self) -> None:
-        asyncio.get_event_loop().run_until_complete(self.webserver_coroutine)
+    async def stop(self) -> None:
+        await self.runner.cleanup()
+        self.site = None
 
     async def set_vehicle_output_handler(self, request: web_request.BaseRequest) -> web_response.Response:
         self.simulation_environment.vehicle.set_acceleration(float(request.query['acceleration']))
