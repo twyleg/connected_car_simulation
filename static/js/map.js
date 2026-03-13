@@ -58,6 +58,21 @@ function kmhFromMetersPerSecond(value) {
   return Number(value || 0) * 3.6;
 }
 
+function buildTimingVisualization(period, ratio, t) {
+  const normalizedPeriod = Number(period || 0);
+  const yellowFraction = normalizedPeriod > 0 ? Math.min(1, 1 / normalizedPeriod) : 0;
+  const redFraction = Math.max(0, Math.min(1, Number(ratio || 0)));
+  const greenFraction = Math.max(0, 1 - redFraction - yellowFraction);
+  const progress = normalizedPeriod > 0 ? Math.min(1, Number(t || 0) / normalizedPeriod) : 0;
+
+  return {
+    redFraction,
+    yellowFraction,
+    greenFraction,
+    progress,
+  };
+}
+
 class TrafficLight {
 
   constructor(id, lon, lat) {
@@ -157,16 +172,20 @@ class TrafficLight {
     this.popupOverlay.getElement().classList.remove('open');
   }
 
+  focusOnMap(map) {
+    const coordinate = this.feature.getGeometry().getCoordinates();
+    const view = map.getView();
+    view.cancelAnimations();
+    view.setCenter(coordinate);
+  }
+
   applyPopupOffset() {
     this.popupCard.style.transform = `translate(calc(-50% + ${this.popupOffset.x}px), calc(-100% + ${this.popupOffset.y}px))`;
   }
 
   setPopupContent(trafficLightState) {
     const positionOnRoute = trafficLightState.position_on_route ?? trafficLightState.position_on_track ?? 0;
-    const yellowFraction = Math.min(1, 1 / trafficLightState.period);
-    const redFraction = Math.max(0, Math.min(1, trafficLightState.ratio));
-    const greenFraction = Math.max(0, 1 - redFraction - yellowFraction);
-    const progress = trafficLightState.period > 0 ? Math.min(1, trafficLightState.t / trafficLightState.period) : 0;
+    const timing = buildTimingVisualization(trafficLightState.period, trafficLightState.ratio, trafficLightState.t);
 
     this.popupStateValue.textContent = trafficLightState.state.toUpperCase();
     this.popupStateBadge.textContent = trafficLightState.state.toUpperCase();
@@ -176,10 +195,10 @@ class TrafficLight {
     this.popupTimeValue.textContent = `${formatNumber(trafficLightState.t, 2)} s`;
     this.popupPositionValue.textContent = metersToDisplay(positionOnRoute);
 
-    this.progressSegments.red.style.width = `${redFraction * 100}%`;
-    this.progressSegments.yellow.style.width = `${yellowFraction * 100}%`;
-    this.progressSegments.green.style.width = `${greenFraction * 100}%`;
-    this.popupMarker.style.left = `${progress * 100}%`;
+    this.progressSegments.red.style.width = `${timing.redFraction * 100}%`;
+    this.progressSegments.yellow.style.width = `${timing.yellowFraction * 100}%`;
+    this.progressSegments.green.style.width = `${timing.greenFraction * 100}%`;
+    this.popupMarker.style.left = `${timing.progress * 100}%`;
   }
 
   update(trafficLightState) {
@@ -276,11 +295,13 @@ class UI {
 
   constructor() {
     this.trafficLightsByIdMap = new Map();
+    this.trafficLightOverviewRowMap = new Map();
     this.controlMenu = new ControlMenu();
     this.followVehicle = false;
     this.latestVehicleCoordinate = null;
     this.centerVehicleButton = document.getElementById('center_vehicle_button');
     this.followVehicleButton = document.getElementById('follow_vehicle_button');
+    this.trafficLightOverviewList = document.getElementById('traffic_light_overview_list');
 
     this.routeLayer = new ol.layer.Vector({
       source: new ol.source.Vector({
@@ -334,6 +355,27 @@ class UI {
 
     this.updateFollowVehicleButton();
 
+    this.trafficLightOverviewList.addEventListener('click', (event) => {
+      const row = event.target.closest('[data-traffic-light-id]');
+      if (row === null) {
+        return;
+      }
+
+      const trafficLightId = Number(row.dataset.trafficLightId);
+      const trafficLight = this.trafficLightsByIdMap.get(trafficLightId);
+      if (trafficLight === undefined) {
+        return;
+      }
+
+      if (this.followVehicle) {
+        this.followVehicle = false;
+        this.updateFollowVehicleButton();
+      }
+
+      trafficLight.focusOnMap(this.map);
+      trafficLight.openPopup();
+    });
+
     this.map.on('click', (evt) => {
       let trafficLightFeature;
 
@@ -377,6 +419,97 @@ class UI {
     this.followVehicleButton.classList.toggle('active', this.followVehicle);
   }
 
+  createTrafficLightOverviewRow(trafficLightId) {
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'topic-list-row';
+    row.dataset.trafficLightId = `${trafficLightId}`;
+    row.innerHTML = `
+      <div class="topic-list-id"></div>
+      <div><span class="topic-state-pill"></span></div>
+      <div class="topic-position"></div>
+      <div class="topic-timing">
+        <div class="topic-timing-meta">
+          <span class="topic-period"></span>
+          <span class="topic-ratio"></span>
+          <span class="topic-clock"></span>
+        </div>
+        <div class="topic-phase-track">
+          <div class="topic-phase-segment red"></div>
+          <div class="topic-phase-segment yellow"></div>
+          <div class="topic-phase-segment green"></div>
+          <div class="topic-phase-marker"></div>
+        </div>
+      </div>
+    `;
+
+    const elements = {
+      root: row,
+      id: row.querySelector('.topic-list-id'),
+      state: row.querySelector('.topic-state-pill'),
+      position: row.querySelector('.topic-position'),
+      period: row.querySelector('.topic-period'),
+      ratio: row.querySelector('.topic-ratio'),
+      clock: row.querySelector('.topic-clock'),
+      redSegment: row.querySelector('.topic-phase-segment.red'),
+      yellowSegment: row.querySelector('.topic-phase-segment.yellow'),
+      greenSegment: row.querySelector('.topic-phase-segment.green'),
+      marker: row.querySelector('.topic-phase-marker'),
+    };
+
+    this.trafficLightOverviewRowMap.set(trafficLightId, elements);
+    return elements;
+  }
+
+  renderTrafficLightOverview(trafficLightsState) {
+    if (trafficLightsState.length === 0) {
+      this.trafficLightOverviewList.innerHTML = '<div class="topic-list-empty">No traffic lights available in the current scenario.</div>';
+      this.trafficLightOverviewRowMap.clear();
+      return;
+    }
+
+    if (this.trafficLightOverviewList.querySelector('.topic-list-empty') !== null) {
+      this.trafficLightOverviewList.innerHTML = '';
+    }
+
+    const activeIds = new Set();
+
+    trafficLightsState.forEach((trafficLightState) => {
+      const trafficLightId = trafficLightState.id;
+      activeIds.add(trafficLightId);
+      const positionOnRoute = trafficLightState.position_on_route ?? trafficLightState.position_on_track ?? 0;
+      const timing = buildTimingVisualization(trafficLightState.period, trafficLightState.ratio, trafficLightState.t);
+      let rowElements = this.trafficLightOverviewRowMap.get(trafficLightId);
+
+      if (rowElements === undefined) {
+        rowElements = this.createTrafficLightOverviewRow(trafficLightId);
+        this.trafficLightOverviewList.appendChild(rowElements.root);
+      }
+
+      rowElements.id.textContent = `TL-${trafficLightId}`;
+      rowElements.state.className = `topic-state-pill ${trafficLightState.state}`;
+      rowElements.state.textContent = trafficLightState.state;
+      rowElements.position.textContent = metersToDisplay(positionOnRoute);
+      rowElements.period.textContent = `Period ${formatNumber(trafficLightState.period, 1)} s`;
+      rowElements.ratio.textContent = `Ratio ${formatNumber(trafficLightState.ratio, 2)}`;
+      rowElements.clock.textContent = `Clock ${formatNumber(trafficLightState.t, 2)} s`;
+      rowElements.redSegment.style.width = `${timing.redFraction * 100}%`;
+      rowElements.yellowSegment.style.width = `${timing.yellowFraction * 100}%`;
+      rowElements.greenSegment.style.width = `${timing.greenFraction * 100}%`;
+      rowElements.marker.style.left = `${timing.progress * 100}%`;
+    });
+
+    Array.from(this.trafficLightOverviewRowMap.keys()).forEach((trafficLightId) => {
+      if (activeIds.has(trafficLightId)) {
+        return;
+      }
+
+      const rowElements = this.trafficLightOverviewRowMap.get(trafficLightId);
+      rowElements.root.remove();
+      this.trafficLightOverviewRowMap.delete(trafficLightId);
+    });
+  }
+
   findOrCreateTrafficLight(trafficLightState) {
     const id = trafficLightState.id;
     let trafficLight = this.trafficLightsByIdMap.get(id);
@@ -393,6 +526,7 @@ class UI {
 
   handleSimulationStateUpdate(simulationState) {
     this.controlMenu.handleSimulationStateUpdate(simulationState);
+    this.renderTrafficLightOverview(simulationState.traffic_lights_state);
 
     const vehicleLon = simulationState.vehicle_state.position_coordinates.lon;
     const vehicleLat = simulationState.vehicle_state.position_coordinates.lat;

@@ -150,6 +150,36 @@
                         </div>
                         <div id="map" class="map"></div>
                     </div>
+
+                    <div class="dashboard-card glass-card topic-card">
+                        <div class="card-header-row topic-card-header">
+                            <div>
+                                <p class="section-label">Details</p>
+                                <h2 class="section-title">Simulation topics</h2>
+                            </div>
+                            <p class="map-help">Use tabs here for traffic lights now and future simulation elements later.</p>
+                        </div>
+
+                        <ul class="nav topic-tabs" id="simulation_topic_tabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="traffic-lights-tab" data-toggle="tab" data-target="#traffic-lights-panel" type="button" role="tab" aria-controls="traffic-lights-panel" aria-selected="true">
+                                    Traffic lights
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content topic-tab-content">
+                            <div class="tab-pane fade show active" id="traffic-lights-panel" role="tabpanel" aria-labelledby="traffic-lights-tab">
+                                <div class="topic-list-header">
+                                    <span>ID</span>
+                                    <span>State</span>
+                                    <span>Position</span>
+                                    <span>Timing</span>
+                                </div>
+                                <div id="traffic_light_overview_list" class="topic-list"></div>
+                            </div>
+                        </div>
+                    </div>
                 </section>
             </div>
         </main>
