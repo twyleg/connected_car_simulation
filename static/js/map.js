@@ -65,6 +65,8 @@ class TrafficLight {
     this.lon = lon;
     this.lat = lat;
     this.state = 'red';
+    this.popupOffset = { x: 0, y: 0 };
+    this.dragState = null;
 
     this.feature = new ol.Feature({
       type: 'traffic_light_red',
@@ -77,16 +79,66 @@ class TrafficLight {
 
   createPopupOverlay() {
     const popupElem = document.createElement('div');
-    popupElem.title = `Traffic Light [${this.id}]`;
-    $('body').append(popupElem);
+    const popupTemplate = document.getElementById('traffic_light_popup_template');
+    popupElem.className = 'traffic-light-popup-anchor';
+    popupElem.appendChild(popupTemplate.content.firstElementChild.cloneNode(true));
 
-    $(popupElem).popover({
-      container: popupElem,
-      placement: 'top',
-      animation: false,
-      html: true,
-      content: '',
+    this.popupCard = popupElem.querySelector('.traffic-light-popup');
+    this.popupHeader = popupElem.querySelector('.traffic-light-popup-header');
+    this.popupTitle = popupElem.querySelector('.traffic-light-popup-title');
+    this.popupCloseButton = popupElem.querySelector('.traffic-light-popup-close');
+    this.popupStateValue = popupElem.querySelector('.traffic-light-state-value');
+    this.popupStateBadge = popupElem.querySelector('.traffic-light-state-badge');
+    this.popupPeriodValue = popupElem.querySelector('.popup-period-value');
+    this.popupRatioValue = popupElem.querySelector('.popup-ratio-value');
+    this.popupTimeValue = popupElem.querySelector('.popup-time-value');
+    this.popupPositionValue = popupElem.querySelector('.popup-position-value');
+    this.popupMarker = popupElem.querySelector('.traffic-light-progress-marker');
+    this.progressSegments = {
+      red: popupElem.querySelector('.segment-red'),
+      yellow: popupElem.querySelector('.segment-yellow'),
+      green: popupElem.querySelector('.segment-green'),
+    };
+
+    this.popupTitle.textContent = `Traffic Light ${this.id}`;
+
+    this.popupCloseButton.addEventListener('click', (event) => {
+      event.stopPropagation();
+      this.closePopup();
     });
+
+    this.popupHeader.addEventListener('mousedown', (event) => {
+      if (event.target === this.popupCloseButton) {
+        return;
+      }
+
+      this.dragState = {
+        startX: event.clientX,
+        startY: event.clientY,
+        originX: this.popupOffset.x,
+        originY: this.popupOffset.y,
+      };
+      event.stopPropagation();
+      event.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (event) => {
+      if (this.dragState === null) {
+        return;
+      }
+
+      this.popupOffset = {
+        x: this.dragState.originX + (event.clientX - this.dragState.startX),
+        y: this.dragState.originY + (event.clientY - this.dragState.startY),
+      };
+      this.applyPopupOffset();
+    });
+
+    document.addEventListener('mouseup', () => {
+      this.dragState = null;
+    });
+
+    this.applyPopupOffset();
 
     return new ol.Overlay({
       element: popupElem
@@ -94,18 +146,40 @@ class TrafficLight {
   }
 
   openPopup() {
-    $(this.popupOverlay.getElement()).popover('show');
+    this.popupOverlay.getElement().classList.add('open');
   }
 
   isPopupOpen() {
-    return $(this.popupOverlay.getElement()).find('.popover-body').length === 1;
+    return this.popupOverlay.getElement().classList.contains('open');
   }
 
-  setPopupContent(content) {
-    $(this.popupOverlay.getElement()).attr('data-content', content);
-    if (this.isPopupOpen()) {
-      this.openPopup();
-    }
+  closePopup() {
+    this.popupOverlay.getElement().classList.remove('open');
+  }
+
+  applyPopupOffset() {
+    this.popupCard.style.transform = `translate(calc(-50% + ${this.popupOffset.x}px), calc(-100% + ${this.popupOffset.y}px))`;
+  }
+
+  setPopupContent(trafficLightState) {
+    const positionOnRoute = trafficLightState.position_on_route ?? trafficLightState.position_on_track ?? 0;
+    const yellowFraction = Math.min(1, 1 / trafficLightState.period);
+    const redFraction = Math.max(0, Math.min(1, trafficLightState.ratio));
+    const greenFraction = Math.max(0, 1 - redFraction - yellowFraction);
+    const progress = trafficLightState.period > 0 ? Math.min(1, trafficLightState.t / trafficLightState.period) : 0;
+
+    this.popupStateValue.textContent = trafficLightState.state.toUpperCase();
+    this.popupStateBadge.textContent = trafficLightState.state.toUpperCase();
+    this.popupStateBadge.dataset.state = trafficLightState.state;
+    this.popupPeriodValue.textContent = `${formatNumber(trafficLightState.period, 1)} s`;
+    this.popupRatioValue.textContent = formatNumber(trafficLightState.ratio, 2);
+    this.popupTimeValue.textContent = `${formatNumber(trafficLightState.t, 2)} s`;
+    this.popupPositionValue.textContent = metersToDisplay(positionOnRoute);
+
+    this.progressSegments.red.style.width = `${redFraction * 100}%`;
+    this.progressSegments.yellow.style.width = `${yellowFraction * 100}%`;
+    this.progressSegments.green.style.width = `${greenFraction * 100}%`;
+    this.popupMarker.style.left = `${progress * 100}%`;
   }
 
   update(trafficLightState) {
@@ -117,12 +191,7 @@ class TrafficLight {
       this.feature.setStyle(styles['traffic_light_green']);
     }
 
-    this.setPopupContent(
-      `state: ${trafficLightState.state}` +
-      `<br>period: ${trafficLightState.period}` +
-      `<br>ratio: ${trafficLightState.ratio}` +
-      `<br>time: ${trafficLightState.t.toFixed(3)}`
-    );
+    this.setPopupContent(trafficLightState);
   }
 }
 

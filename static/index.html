@@ -154,5 +154,51 @@
             </div>
         </main>
     </div>
+
+    <template id="traffic_light_popup_template">
+        <div class="traffic-light-popup">
+            <div class="traffic-light-popup-header">
+                <span class="traffic-light-popup-title">Traffic Light</span>
+                <button type="button" class="traffic-light-popup-close" aria-label="Close popup">x</button>
+            </div>
+            <div class="traffic-light-popup-body">
+                <div class="traffic-light-popup-state-row">
+                    <span class="traffic-light-state-badge">State</span>
+                    <strong class="traffic-light-state-value">-</strong>
+                </div>
+                <div class="traffic-light-popup-progress">
+                    <div class="traffic-light-popup-progress-track">
+                        <div class="traffic-light-progress-segment segment-red"></div>
+                        <div class="traffic-light-progress-segment segment-yellow"></div>
+                        <div class="traffic-light-progress-segment segment-green"></div>
+                        <div class="traffic-light-progress-marker"></div>
+                    </div>
+                    <div class="traffic-light-popup-progress-labels">
+                        <span class="phase-label">Red</span>
+                        <span class="phase-label">Yellow</span>
+                        <span class="phase-label">Green</span>
+                    </div>
+                </div>
+                <div class="traffic-light-popup-grid">
+                    <div class="popup-metric">
+                        <span class="popup-metric-label">Period</span>
+                        <strong class="popup-period-value">-</strong>
+                    </div>
+                    <div class="popup-metric">
+                        <span class="popup-metric-label">Red ratio</span>
+                        <strong class="popup-ratio-value">-</strong>
+                    </div>
+                    <div class="popup-metric">
+                        <span class="popup-metric-label">Clock</span>
+                        <strong class="popup-time-value">-</strong>
+                    </div>
+                    <div class="popup-metric">
+                        <span class="popup-metric-label">Position</span>
+                        <strong class="popup-position-value">-</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
 </body>
 </html>
