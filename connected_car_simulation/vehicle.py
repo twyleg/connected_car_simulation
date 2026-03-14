@@ -1,5 +1,5 @@
 import time
-from route import Route
+from connected_car_simulation.route import Route
 from typing import Dict
 from gpxpy.gpx import GPXTrackPoint
 

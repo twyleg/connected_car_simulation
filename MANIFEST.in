@@ -1,0 +1,9 @@
+include README.md
+include LICENSE
+include requirements.txt
+graft connected_car_simulation
+recursive-exclude * *.py[co]
+include versioneer.py
+include connected_car_simulation/py.typed
+include connected_car_simulation/_version.py
+include connected_car_simulation/resources/*

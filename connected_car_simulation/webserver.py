@@ -1,11 +1,12 @@
-import pathlib
-import os
 import json
-from simulation_environment import SimulationEnvironment
+from pathlib import Path
 from aiohttp import web, web_response, web_request
 
+from connected_car_simulation.simulation_environment import SimulationEnvironment
+from connected_car_simulation.resource_path import get_resource_path
 
-ROOT_DIR = pathlib.Path(os.getcwd())
+
+FILE_DIR = Path(__file__).parent
 
 
 class WebServer:
@@ -22,7 +23,7 @@ class WebServer:
         self.app.router.add_get('/api/get_vehicle_input_adhoc', self.get_vehicle_input_adhoc_handler)
         self.app.router.add_get('/api/get_vehicle_input_infrastructure', self.get_vehicle_input_infrastructure_handler)
         self.app.router.add_static('/static/',
-                              path=ROOT_DIR / 'static',
+                              path=FILE_DIR / 'resources/ui/',
                               name='static')
         self.runner = web.AppRunner(self.app)
         self.site = None

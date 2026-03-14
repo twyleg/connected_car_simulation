@@ -2,11 +2,17 @@ import asyncio
 import signal
 import xml.etree.ElementTree as ET
 from contextlib import suppress
+from pathlib import Path
 
-from simulation_environment import SimulationEnvironment
-from websocket import Websocket
-from webserver import WebServer
 from typing import Dict
+
+from connected_car_simulation.simulation_environment import SimulationEnvironment
+from connected_car_simulation.resource_path import get_resource_path
+from connected_car_simulation.websocket import Websocket
+from connected_car_simulation.webserver import WebServer
+
+
+FILE_DIR = Path(__file__).parent
 
 
 async def simulation_updater_and_publisher(simulation_environment: SimulationEnvironment, websocket: Websocket):
@@ -17,15 +23,15 @@ async def simulation_updater_and_publisher(simulation_environment: SimulationEnv
         await asyncio.sleep(0.1)
 
 
-def read_config(config_file_path: str) -> Dict:
+def read_config(config_file_path: Path) -> Dict:
     tree = ET.parse(config_file_path)
     return tree.getroot()
 
 
-async def main() -> None:
-    config = read_config('config.xml')
+async def run() -> None:
+    config = read_config(FILE_DIR / 'resources/config.xml')
 
-    simulation_environment = SimulationEnvironment(route_file_path='static/routes/ostfalia-wf-wob.gpx',
+    simulation_environment = SimulationEnvironment(route_file_path=FILE_DIR / 'resources/ui/routes/ostfalia-wf-wob.gpx',
                                                    config=config)
     simulation_environment.vehicle.acceleration = 0.0
     simulation_environment.vehicle.set_target_velocity_in_kmh(0.0)
@@ -60,8 +66,12 @@ async def main() -> None:
         await websocket.stop()
         await webserver.stop()
 
-if __name__ == '__main__':
+
+def main() -> None:
     try:
-        asyncio.run(main())
+        asyncio.run(run())
     except KeyboardInterrupt:
         pass
+
+if __name__ == '__main__':
+    main()

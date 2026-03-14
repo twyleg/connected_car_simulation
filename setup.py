@@ -1,59 +1,40 @@
-import os
+# Copyright (C) 2024 twyleg
+import versioneer
+from pathlib import Path
 from setuptools import find_packages, setup
-from setuptools.command.install import install
-import PyInstaller.__main__
-import shutil
-
-VERSION = '0.0.1'
-
-class PyinstallerCommand(install):
-
-    OUTPUT_DIR = f'dist/connected_car_simulation_{VERSION}'
-    ARCHIVE_NAME = f'connected_car_simulation_{VERSION}'
-
-    def run(self):
-        shutil.rmtree(self.OUTPUT_DIR, ignore_errors=True)
-        PyInstaller.__main__.run([
-            'connected_car_simulation/simulator.py',
-            '--paths', 'connected_car_simulation',
-            '--distpath', self.OUTPUT_DIR,
-            '--specpath', 'build/',
-            '--onefile',
-            '--windowed',
-            '--console'
-        ])
-        shutil.copytree('static/', self.OUTPUT_DIR + '/static')
-        shutil.copytree('examples/', self.OUTPUT_DIR + '/examples')
-        shutil.copy('config.xml', self.OUTPUT_DIR + '/config.xml')
-        shutil.make_archive(
-            'dist/' + self.ARCHIVE_NAME,
-            'zip',
-            root_dir='dist/',
-            base_dir=f'connected_car_simulation_{VERSION}',
-        )
 
 
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+def read(relative_filepath):
+    return open(Path(__file__).parent / relative_filepath).read()
 
 
+def read_long_description() -> str:
+    return read("README.md")
+
+
+# fmt: off
 setup(
     name="connected_car_simulation",
-    version=VERSION,
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     author="Torsten Wylegala",
     author_email="mail@twyleg.de",
-    description=("Simulation to experiment with connected car features"),
+    description="",
     license="GPL 3.0",
-    keywords="connected car simulation",
+    keywords="",
     url="https://github.com/twyleg/connected_car_simulation",
     packages=find_packages(),
-    long_description=read('README.md'),
+    long_description=read_long_description(),
+    long_description_content_type="text/markdown",
+    include_package_data=True,
     install_requires=[
-        'websockets',
-        'aiohttp',
-        'gpxpy'
+        "websockets",
+        "aiohttp",
+        "gpxpy"
     ],
-    cmdclass={
-        'pyinstaller': PyinstallerCommand
-    }
+    entry_points={
+        "console_scripts": [
+            "connected_car_simulation = connected_car_simulation.main:main",
+        ]
+    },
 )
