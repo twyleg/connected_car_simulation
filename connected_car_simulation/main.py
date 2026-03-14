@@ -44,6 +44,7 @@ async def run() -> None:
 
     print('Connected Car Simulation started!')
     print('Open http://localhost:8080/static/index.html in your browser.')
+    print('API documentation: http://localhost:8080/api/docs')
 
     updater_task = asyncio.create_task(
         simulation_updater_and_publisher(simulation_environment, websocket)
