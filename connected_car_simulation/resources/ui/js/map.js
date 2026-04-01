@@ -234,7 +234,7 @@ class ControlMenu {
 
     this.vehiclePositionSlider.oninput = (() => {
       this.positionValueField.textContent = metersToDisplay(this.vehiclePositionSlider.value);
-      $.get(`${apiBaseUrl}/api/set_vehicle_position`, { position: this.vehiclePositionSlider.value });
+      $.get(`${apiBaseUrl}/api/actions/set_vehicle_position`, { position: this.vehiclePositionSlider.value });
     });
 
     this.targetVelocitySlider.oninput = (() => {
@@ -247,14 +247,14 @@ class ControlMenu {
       this.pushVehicleOutput();
     });
 
-    $.get(`${apiBaseUrl}/api/get_route_information`, (data) => {
+    $.get(`${apiBaseUrl}/api/actions/get_route_information`, (data) => {
       this.vehiclePositionSlider.max = parseInt(data.length, 10);
       this.routeLengthField.textContent = metersToDisplay(data.length);
     });
   }
 
   pushVehicleOutput() {
-    $.get(`${apiBaseUrl}/api/set_vehicle_output`, {
+    $.get(`${apiBaseUrl}/api/actions/set_vehicle_output`, {
       acceleration: this.accelerationSlider.value,
       target_velocity: this.targetVelocitySlider.value
     });

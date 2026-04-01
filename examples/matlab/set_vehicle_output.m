@@ -3,7 +3,7 @@ function [] = set_vehicle_output(target_velocity, acceleration)
 %   Detailed explanation goes here
 global hostname
 
-str = 'http://' + hostname + '/api/set_vehicle_output?target_velocity=' + target_velocity + '&acceleration=' + acceleration;
+str = 'http://' + hostname + '/api/actions/set_vehicle_output?target_velocity=' + target_velocity + '&acceleration=' + acceleration;
 webread(str);
 
 end

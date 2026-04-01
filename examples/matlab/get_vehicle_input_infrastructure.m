@@ -3,7 +3,7 @@ function [input] = get_vehicle_input_infrastructure()
 %   Detailed explanation goes here
 global hostname
 
-str = 'http://' + hostname + '/api/get_vehicle_input_infrastructure';
+str = 'http://' + hostname + '/api/actions/get_vehicle_input_infrastructure';
 input = webread(str);
 
 end

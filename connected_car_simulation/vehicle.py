@@ -14,8 +14,8 @@ class Vehicle:
         self.acceleration = 0.0
         self.current_velocity = 0.0
         self.target_velocity = 0.0
-        self.position_coordinates: GPXTrackPoint
         self.position_on_route = 0.0
+        self.position_coordinates: GPXTrackPoint = self.route.get_track_point_by_dist(self.position_on_route)
         self.last_update_timestamp = time.time()
 
     def set_target_velocity_in_ms(self, target_velocity: float) -> None:
@@ -29,6 +29,7 @@ class Vehicle:
 
     def set_position_on_route(self, position):
         self.position_on_route = min(position, len(self.route.waypoints))
+        self.position_coordinates = self.route.get_track_point_by_dist(self.position_on_route)
 
     def get_velocity_in_kmh(self) -> float:
         return self.current_velocity * 3.6
@@ -63,5 +64,4 @@ class Vehicle:
         self.position_on_route = self.position_on_route + driven_distance
         self.position_coordinates = self.route.get_track_point_by_dist(self.position_on_route)
         self.last_update_timestamp = current_timestamp
-
 

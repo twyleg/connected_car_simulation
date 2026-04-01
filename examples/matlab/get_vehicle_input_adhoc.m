@@ -3,7 +3,7 @@ function [input] = get_vehicle_input_adhoc()
 %   Detailed explanation goes here
 global hostname
 
-str = 'http://' + hostname + '/api/get_vehicle_input_adhoc';
+str = 'http://' + hostname + '/api/actions/get_vehicle_input_adhoc';
 input = webread(str);
 
 end

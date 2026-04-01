@@ -23,8 +23,8 @@ class TrafficLight:
         self.lat = lat
         self.period = period
         self.ratio = ratio
-        self.state = TrafficLightState.RED
-        self.offset = randint(0, period)
+        self.state = TrafficLightState.RED.value
+        self.offset = randint(0, int(period))
         self.t = 0
 
     def create_id(self) -> int:

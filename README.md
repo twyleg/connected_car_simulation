@@ -65,20 +65,24 @@ Once started, open:
 - UI: `http://localhost:8080/static/index.html`
 - Swagger docs: `http://localhost:8080/api/docs`
 
+The simulator writes logs to stdout and to `connected_car_simulation.log` in the current working directory.
+
 The simulator also exposes a WebSocket endpoint on:
 
 - `ws://localhost:8081`
+
+Python client examples are available in [`examples/python`](/home/twyleg/dev/workspace/connected_car_simulation/examples/python), with one `simple_example` over HTTP and one over WebSocket.
 
 ## HTTP API
 
 The simulator provides these main HTTP endpoints:
 
-- `GET /api/set_vehicle_output`
-- `GET /api/set_vehicle_position`
-- `GET /api/get_simulation_state`
-- `GET /api/get_route_information`
-- `GET /api/get_vehicle_input_adhoc`
-- `GET /api/get_vehicle_input_infrastructure`
+- `GET /api/actions/set_vehicle_output`
+- `GET /api/actions/set_vehicle_position`
+- `GET /api/actions/get_simulation_state`
+- `GET /api/actions/get_route_information`
+- `GET /api/actions/get_vehicle_input_adhoc`
+- `GET /api/actions/get_vehicle_input_infrastructure`
 - `GET /api/openapi.json`
 - `GET /api/docs`
 
