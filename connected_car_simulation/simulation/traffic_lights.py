@@ -1,8 +1,9 @@
 import time
-from connected_car_simulation.route import Route
-from typing import List, Dict
-from random import randint
 from enum import Enum
+from random import randint
+from typing import Dict, List
+
+from connected_car_simulation.simulation.route import Route
 
 
 class TrafficLightState(Enum):

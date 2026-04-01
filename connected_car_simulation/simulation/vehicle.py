@@ -1,7 +1,9 @@
 import time
-from connected_car_simulation.route import Route
 from typing import Dict
+
 from gpxpy.gpx import GPXTrackPoint
+
+from connected_car_simulation.simulation.route import Route
 
 
 class Vehicle:
@@ -64,4 +66,3 @@ class Vehicle:
         self.position_on_route = self.position_on_route + driven_distance
         self.position_coordinates = self.route.get_track_point_by_dist(self.position_on_route)
         self.last_update_timestamp = current_timestamp
-

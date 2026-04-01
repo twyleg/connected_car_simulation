@@ -1,14 +1,15 @@
 import json
 import logging
-import websockets
 from typing import Any, Dict, Optional
 
-from connected_car_simulation.simulation_api import (
+import websockets
+
+from connected_car_simulation.simulation.simulation_api import (
     InvalidSimulationRequestError,
     SimulationApi,
     UnknownSimulationActionError,
 )
-from connected_car_simulation.simulation_environment import SimulationEnvironment
+from connected_car_simulation.simulation.simulation_environment import SimulationEnvironment
 
 
 logger = logging.getLogger(__name__)

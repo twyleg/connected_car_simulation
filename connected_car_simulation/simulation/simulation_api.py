@@ -1,6 +1,6 @@
 from typing import Any, Callable, Dict
 
-from connected_car_simulation.simulation_environment import SimulationEnvironment
+from connected_car_simulation.simulation.simulation_environment import SimulationEnvironment
 
 
 class SimulationApiError(Exception):

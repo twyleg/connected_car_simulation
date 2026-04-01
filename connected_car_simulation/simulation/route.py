@@ -1,6 +1,6 @@
 import gpxpy
 from gpxpy.gpx import GPXTrackPoint
-from typing import List, Dict
+from typing import Dict, List
 
 
 class Route:
@@ -8,8 +8,8 @@ class Route:
     def __init__(self, gpx_file_path: str, speed_limits_config: Dict):
         gpx_file = open(gpx_file_path, 'r')
         self.gpx = gpxpy.parse(gpx_file)
-        self.waypoints = self.calculate_waypoints();
-        self.speed_limits = self.calculate_speed_limits(speed_limits_config);
+        self.waypoints = self.calculate_waypoints()
+        self.speed_limits = self.calculate_speed_limits(speed_limits_config)
 
     def calculate_speed_limits(self, speed_limits_config: Dict) -> List[int]:
         speed_limits: List[int] = [30 for i in range(len(self.waypoints))]
@@ -29,9 +29,9 @@ class Route:
 
         waypoints: list[GPXTrackPoint] = []
 
-        for i in range(0, len(points)-1):
+        for i in range(0, len(points) - 1):
             current_point = points[i]
-            next_point = points[i+1]
+            next_point = points[i + 1]
 
             dist = current_point.distance_2d(next_point)
             route_length = route_length + dist
@@ -68,12 +68,12 @@ class Route:
     def get_track_point_by_dist(self, dist: float) -> GPXTrackPoint:
         if dist > self.get_length():
             return self.get_end_waypoint()
-        elif dist < 0:
+        if dist < 0:
             return self.get_start_waypoint()
-        else:
-            first_trackpoint = self.waypoints[int(dist)]
-            second_trackpoint = self.waypoints[int(dist)+1]
-            return self.interpolate_track_point(first_trackpoint, second_trackpoint, dist % 1.0)
+
+        first_trackpoint = self.waypoints[int(dist)]
+        second_trackpoint = self.waypoints[int(dist) + 1]
+        return self.interpolate_track_point(first_trackpoint, second_trackpoint, dist % 1.0)
 
     def get_speed_limit_by_dist(self, dist: float) -> int:
         return self.speed_limits[int(dist)]
@@ -85,4 +85,4 @@ class Route:
         return self.waypoints[-1]
 
     def get_length(self) -> int:
-        return len(self.waypoints)-2
+        return len(self.waypoints) - 2

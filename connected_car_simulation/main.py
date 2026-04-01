@@ -9,9 +9,9 @@ from pathlib import Path
 from typing import Dict
 
 from connected_car_simulation.logging_utils import configure_logging
-from connected_car_simulation.simulation_environment import SimulationEnvironment
-from connected_car_simulation.websocket import Websocket
-from connected_car_simulation.webserver import WebServer
+from connected_car_simulation.infrastructure.webserver import WebServer
+from connected_car_simulation.infrastructure.websocket import Websocket
+from connected_car_simulation.simulation.simulation_environment import SimulationEnvironment
 
 
 FILE_DIR = Path(__file__).parent

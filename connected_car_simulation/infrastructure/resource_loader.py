@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Any
 
 
-FILE_DIR = Path(__file__).parent
-RESOURCES_DIR = FILE_DIR / "resources"
+FILE_DIR = Path(__file__).resolve().parent
+RESOURCES_DIR = FILE_DIR.parent / "resources"
 
 
 def get_resource_path(*path_parts: str) -> Path:

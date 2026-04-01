@@ -1,18 +1,19 @@
 import logging
 from pathlib import Path
-from aiohttp import web, web_response, web_request
 
-from connected_car_simulation.openapi import create_openapi_spec
-from connected_car_simulation.resource_loader import load_text_resource
-from connected_car_simulation.simulation_api import (
+from aiohttp import web, web_request, web_response
+
+from connected_car_simulation.infrastructure.openapi import create_openapi_spec
+from connected_car_simulation.infrastructure.resource_loader import load_text_resource
+from connected_car_simulation.simulation.simulation_api import (
     InvalidSimulationRequestError,
     SimulationApi,
     UnknownSimulationActionError,
 )
-from connected_car_simulation.simulation_environment import SimulationEnvironment
+from connected_car_simulation.simulation.simulation_environment import SimulationEnvironment
 
 
-FILE_DIR = Path(__file__).parent
+FILE_DIR = Path(__file__).resolve().parent.parent
 logger = logging.getLogger(__name__)
 
 

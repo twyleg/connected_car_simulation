@@ -1,7 +1,8 @@
-from connected_car_simulation.route import Route
-from connected_car_simulation.vehicle import Vehicle
-from connected_car_simulation.traffic_lights import TrafficLightsManager, TrafficLight
 from typing import Dict, List
+
+from connected_car_simulation.simulation.route import Route
+from connected_car_simulation.simulation.traffic_lights import TrafficLight, TrafficLightsManager
+from connected_car_simulation.simulation.vehicle import Vehicle
 
 
 class SimulationEnvironment:
