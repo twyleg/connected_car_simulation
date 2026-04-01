@@ -9,6 +9,7 @@ Connected Car Simulation is a Python-based simulator for experimenting with vehi
 
 ![Traffic light states](doc/images/web_application_screenshot.png)
 
+
 ## Features
 
 - Realtime vehicle simulation on a GPX-based route
