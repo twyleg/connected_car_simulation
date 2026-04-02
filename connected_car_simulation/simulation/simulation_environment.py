@@ -1,7 +1,7 @@
-from typing import Dict, List
+from typing import Any, Dict, Iterable
 
+from connected_car_simulation.simulation.models import ModelRegistration, SimulationModelRegistry
 from connected_car_simulation.simulation.route import Route
-from connected_car_simulation.simulation.traffic_lights import TrafficLight, TrafficLightsManager
 from connected_car_simulation.simulation.vehicle import Vehicle
 
 
@@ -9,14 +9,17 @@ class SimulationEnvironment:
 
     def __init__(self,
                  route_file_path: str,
-                 config: Dict):
+                 config: Any,
+                 model_registrations: Iterable[ModelRegistration]):
         self.route = Route(route_file_path, config.find('SpeedLimits'))
         self.vehicle = Vehicle(config.find('Vehicle'), self.route)
-        self.traffic_lights_manager = TrafficLightsManager(config.find('TrafficLights'), self.route)
+        self.models = SimulationModelRegistry.from_config(config, self.route, model_registrations)
+        self.previous_simulation_state = self.get_simulation_state()
 
     def update(self) -> None:
         self.vehicle.update()
-        self.traffic_lights_manager.update()
+        self.models.update(self.vehicle.get_vehicle_state(), self.previous_simulation_state)
+        self.previous_simulation_state = self.get_simulation_state()
 
     def set_vehicle_position(self, position: float):
         self.vehicle.set_position_on_route(position)
@@ -24,7 +27,7 @@ class SimulationEnvironment:
     def get_simulation_state(self) -> Dict:
         simulation_state = {
             'vehicle_state': self.vehicle.get_vehicle_state(),
-            'traffic_lights_state': self.traffic_lights_manager.get_traffic_lights_state()
+            'models': self.models.get_simulation_state(),
         }
         return simulation_state
 
@@ -41,16 +44,6 @@ class SimulationEnvironment:
             }
         }
         return simulation_state
-
-    def get_traffic_lights_in_range(self, range: int) -> List[TrafficLight]:
-        traffic_lights_in_range: List[TrafficLight] = []
-        min_pos = self.vehicle.position_on_route - 10
-        max_pos = self.vehicle.position_on_route + range
-
-        for traffic_light in self.traffic_lights_manager.traffic_lights:
-            if min_pos < traffic_light.position_on_track < max_pos:
-                traffic_lights_in_range.append(traffic_light)
-        return traffic_lights_in_range
 
     def get_vehicle_state(self) -> Dict:
         return {
@@ -69,7 +62,7 @@ class SimulationEnvironment:
         vehicle_input = {
             'vehicle_state': self.get_vehicle_state(),
             'map': self.get_map_data(),
-            'traffic_lights': [traffic_light.get_output() for traffic_light in self.get_traffic_lights_in_range(radio_range)]
+            'models': self.models.get_vehicle_input(self.vehicle.get_vehicle_state(), max_distance=radio_range),
         }
         return vehicle_input
 
@@ -77,6 +70,6 @@ class SimulationEnvironment:
         vehicle_input = {
             'vehicle_state': self.get_vehicle_state(),
             'map': self.get_map_data(),
-            'traffic_lights': [traffic_light.get_output() for traffic_light in self.traffic_lights_manager.traffic_lights]
+            'models': self.models.get_vehicle_input(self.vehicle.get_vehicle_state()),
         }
         return vehicle_input

@@ -1,43 +1,24 @@
-const styles = {
-  'Point': new ol.style.Style({
+import { formatNumber, kmhFromMetersPerSecond, metersToDisplay } from './utils.js';
+
+const baseStyles = {
+  Point: new ol.style.Style({
     image: new ol.style.Circle({
       fill: new ol.style.Fill({ color: 'rgba(255,255,0,0.4)' }),
       radius: 5,
       stroke: new ol.style.Stroke({ color: '#ff0', width: 1 }),
     }),
   }),
-  'LineString': new ol.style.Style({
+  LineString: new ol.style.Style({
     stroke: new ol.style.Stroke({ color: '#4dd0a8', width: 4 }),
   }),
-  'MultiLineString': new ol.style.Style({
+  MultiLineString: new ol.style.Style({
     stroke: new ol.style.Stroke({ color: [99, 179, 255, 0.9], width: 6 }),
   }),
-  'geoMarker': new ol.style.Style({
+  geoMarker: new ol.style.Style({
     image: new ol.style.Circle({
       radius: 8,
       fill: new ol.style.Fill({ color: '#08111f' }),
       stroke: new ol.style.Stroke({ color: '#ecf3ff', width: 3 }),
-    }),
-  }),
-  'traffic_light_red': new ol.style.Style({
-    image: new ol.style.Icon({
-      anchor: [0.5, -0.1],
-      src: 'img/traffic_light_red.png',
-      scale: 0.1,
-    }),
-  }),
-  'traffic_light_yellow': new ol.style.Style({
-    image: new ol.style.Icon({
-      anchor: [0.5, -0.1],
-      src: 'img/traffic_light_yellow.png',
-      scale: 0.1,
-    }),
-  }),
-  'traffic_light_green': new ol.style.Style({
-    image: new ol.style.Icon({
-      anchor: [0.5, -0.1],
-      src: 'img/traffic_light_green.png',
-      scale: 0.1,
     }),
   }),
 };
@@ -45,85 +26,159 @@ const styles = {
 const apiBaseUrl = `${window.location.protocol}//${window.location.host}`;
 const websocketProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
 const websocketUrl = `${websocketProtocol}://${window.location.hostname}:8081`;
-
-function formatNumber(value, digits = 1) {
-  return Number(value || 0).toFixed(digits);
+function toTemplateValue(value) {
+  if (typeof value === 'number') {
+    return Number.isInteger(value) ? `${value}` : formatNumber(value, 2);
+  }
+  if (typeof value === 'boolean') {
+    return value ? 'true' : 'false';
+  }
+  if (value === null || value === undefined) {
+    return '';
+  }
+  return `${value}`;
 }
 
-function metersToDisplay(value) {
-  return `${Math.round(value || 0)} m`;
-}
+const pluginHelpers = {
+  formatNumber,
+  kmhFromMetersPerSecond,
+  metersToDisplay,
+  ol,
+};
 
-function kmhFromMetersPerSecond(value) {
-  return Number(value || 0) * 3.6;
-}
-
-function buildTimingVisualization(period, ratio, t) {
-  const normalizedPeriod = Number(period || 0);
-  const yellowFraction = normalizedPeriod > 0 ? Math.min(1, 1 / normalizedPeriod) : 0;
-  const redFraction = Math.max(0, Math.min(1, Number(ratio || 0)));
-  const greenFraction = Math.max(0, 1 - redFraction - yellowFraction);
-  const progress = normalizedPeriod > 0 ? Math.min(1, Number(t || 0) / normalizedPeriod) : 0;
-
+function createTemplateData(modelState, extraTemplateData = {}) {
   return {
-    redFraction,
-    yellowFraction,
-    greenFraction,
-    progress,
+    ...modelState.state,
+    display_name: modelState.display_name,
+    model_id: modelState.model_id,
+    model_type: modelState.model_type,
+    ...extraTemplateData,
   };
 }
 
-class TrafficLight {
-
-  constructor(id, lon, lat) {
-    this.id = id;
-    this.lon = lon;
-    this.lat = lat;
-    this.state = 'red';
-    this.popupOffset = { x: 0, y: 0 };
-    this.dragState = null;
-
-    this.feature = new ol.Feature({
-      type: 'traffic_light_red',
-      geometry: new ol.geom.Point(ol.proj.fromLonLat([this.lon, this.lat])),
-    });
-
-    this.popupOverlay = this.createPopupOverlay();
-    this.popupOverlay.setPosition(this.feature.getGeometry().getCoordinates());
+function renderTemplate(template, templateData) {
+  if (!template) {
+    return '';
   }
 
-  createPopupOverlay() {
-    const popupElem = document.createElement('div');
-    const popupTemplate = document.getElementById('traffic_light_popup_template');
-    popupElem.className = 'traffic-light-popup-anchor';
-    popupElem.appendChild(popupTemplate.content.firstElementChild.cloneNode(true));
+  return template.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key) => toTemplateValue(templateData[key]));
+}
 
-    this.popupCard = popupElem.querySelector('.traffic-light-popup');
-    this.popupHeader = popupElem.querySelector('.traffic-light-popup-header');
-    this.popupTitle = popupElem.querySelector('.traffic-light-popup-title');
-    this.popupCloseButton = popupElem.querySelector('.traffic-light-popup-close');
-    this.popupStateValue = popupElem.querySelector('.traffic-light-state-value');
-    this.popupStateBadge = popupElem.querySelector('.traffic-light-state-badge');
-    this.popupPeriodValue = popupElem.querySelector('.popup-period-value');
-    this.popupRatioValue = popupElem.querySelector('.popup-ratio-value');
-    this.popupTimeValue = popupElem.querySelector('.popup-time-value');
-    this.popupPositionValue = popupElem.querySelector('.popup-position-value');
-    this.popupMarker = popupElem.querySelector('.traffic-light-progress-marker');
-    this.progressSegments = {
-      red: popupElem.querySelector('.segment-red'),
-      yellow: popupElem.querySelector('.segment-yellow'),
-      green: popupElem.querySelector('.segment-green'),
-    };
+class ModelUiResourceManager {
 
-    this.popupTitle.textContent = `Traffic Light ${this.id}`;
+  constructor() {
+    this.styleElementsByModelType = new Map();
+    this.pluginPromisesByModelType = new Map();
+    this.pluginUrlsByModelType = new Map();
+  }
 
-    this.popupCloseButton.addEventListener('click', (event) => {
-      event.stopPropagation();
-      this.closePopup();
+  ensureResources(modelState) {
+    this.ensureStyle(modelState);
+    return this.ensurePlugin(modelState);
+  }
+
+  ensureStyle(modelState) {
+    const cssText = modelState.ui.style_css;
+    if (!cssText || this.styleElementsByModelType.has(modelState.model_type)) {
+      return;
+    }
+
+    const styleElement = document.createElement('style');
+    styleElement.dataset.modelType = modelState.model_type;
+    styleElement.textContent = cssText;
+    document.head.appendChild(styleElement);
+    this.styleElementsByModelType.set(modelState.model_type, styleElement);
+  }
+
+  ensurePlugin(modelState) {
+    const scriptText = modelState.ui.script_js;
+    if (!scriptText) {
+      return Promise.resolve(null);
+    }
+
+    const existingPluginPromise = this.pluginPromisesByModelType.get(modelState.model_type);
+    if (existingPluginPromise !== undefined) {
+      return existingPluginPromise;
+    }
+
+    const blob = new Blob([scriptText], { type: 'text/javascript' });
+    const objectUrl = URL.createObjectURL(blob);
+    this.pluginUrlsByModelType.set(modelState.model_type, objectUrl);
+
+    const pluginPromise = import(objectUrl)
+      .then((module) => module.default ?? module)
+      .catch((error) => {
+        console.error(`Failed to load model UI plugin for ${modelState.model_type}`, error);
+        return null;
+      });
+
+    this.pluginPromisesByModelType.set(modelState.model_type, pluginPromise);
+    return pluginPromise;
+  }
+}
+
+class GenericModelOverlay {
+
+  constructor(modelId, mapPosition, uiPluginManager, ui) {
+    this.modelId = modelId;
+    this.mapPosition = mapPosition;
+    this.uiPluginManager = uiPluginManager;
+    this.ui = ui;
+    this.popupOffset = { x: 0, y: 0 };
+    this.dragState = null;
+    this.plugin = null;
+    this.pluginInitialized = false;
+    this.templateData = {};
+
+    this.feature = new ol.Feature({
+      type: 'modelMarker',
+      geometry: new ol.geom.Point(ol.proj.fromLonLat([mapPosition.lon, mapPosition.lat])),
     });
 
-    this.popupHeader.addEventListener('mousedown', (event) => {
-      if (event.target === this.popupCloseButton) {
+    this.markerElement = document.createElement('div');
+    this.markerElement.className = 'model-indicator-host';
+
+    this.popupElement = document.createElement('div');
+    this.popupElement.className = 'simulation-popup-anchor';
+
+    this.popupCard = document.createElement('div');
+    this.popupCard.className = 'simulation-popup';
+    this.popupElement.appendChild(this.popupCard);
+
+    this.popupOverlay = new ol.Overlay({
+      element: this.popupElement,
+      position: this.feature.getGeometry().getCoordinates(),
+    });
+
+    this.indicatorOverlay = new ol.Overlay({
+      element: this.markerElement,
+      position: this.feature.getGeometry().getCoordinates(),
+      positioning: 'center-center',
+    });
+
+    this.markerElement.addEventListener('click', (event) => {
+      this.ui.suppressMapClicks();
+      event.preventDefault();
+      event.stopPropagation();
+      this.openPopup();
+    });
+
+    this.popupElement.addEventListener('pointerdown', (event) => {
+      const closeButton = event.target.closest('.simulation-popup-close');
+      if (closeButton === null) {
+        return;
+      }
+
+      this.ui.suppressMapClicks(500);
+      event.preventDefault();
+      event.stopPropagation();
+      this.closePopup();
+    }, true);
+
+    this.popupElement.addEventListener('mousedown', (event) => {
+      const header = event.target.closest('.simulation-popup-header');
+      const closeButton = event.target.closest('.simulation-popup-close');
+      if (header === null || closeButton !== null) {
         return;
       }
 
@@ -133,8 +188,24 @@ class TrafficLight {
         originX: this.popupOffset.x,
         originY: this.popupOffset.y,
       };
+      this.ui.suppressMapClicks();
       event.stopPropagation();
       event.preventDefault();
+    });
+
+    this.popupElement.addEventListener('click', (event) => {
+      this.ui.suppressMapClicks();
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.target.closest('.simulation-popup-close') !== null) {
+        this.closePopup();
+      }
+    });
+
+    this.popupElement.addEventListener('dblclick', (event) => {
+      this.ui.suppressMapClicks();
+      event.preventDefault();
+      event.stopPropagation();
     });
 
     document.addEventListener('mousemove', (event) => {
@@ -152,24 +223,85 @@ class TrafficLight {
     document.addEventListener('mouseup', () => {
       this.dragState = null;
     });
+  }
 
+  async update(modelState) {
+    this.plugin = await this.uiPluginManager.ensureResources(modelState);
+    const coordinate = ol.proj.fromLonLat([modelState.map_position.lon, modelState.map_position.lat]);
+    this.feature.setGeometry(new ol.geom.Point(coordinate));
+    this.popupOverlay.setPosition(coordinate);
+    this.indicatorOverlay.setPosition(coordinate);
+
+    const pluginContext = {
+      feature: this.feature,
+      helpers: pluginHelpers,
+      indicatorElement: this.markerElement,
+      mapPosition: modelState.map_position,
+      modelState,
+      overlay: this,
+      popupElement: this.popupElement,
+      popupCard: this.popupCard,
+      templateData: createTemplateData(modelState),
+    };
+    if (this.plugin?.extendTemplateData !== undefined) {
+      const extraTemplateData = this.plugin.extendTemplateData(pluginContext) || {};
+      pluginContext.templateData = createTemplateData(modelState, extraTemplateData);
+    }
+    this.templateData = pluginContext.templateData;
+
+    if (this.plugin !== null && !this.pluginInitialized) {
+      this.plugin.onOverlayCreate?.({
+        ...pluginContext,
+        templateData: this.templateData,
+      });
+      this.pluginInitialized = true;
+    }
+
+    this.feature.setStyle(null);
+    this.markerElement.classList.remove('is-hidden');
+    if (this.plugin?.renderIndicator !== undefined) {
+      const indicatorHtml = this.plugin.renderIndicator({
+        ...pluginContext,
+        templateData: this.templateData,
+      });
+      this.markerElement.innerHTML = indicatorHtml || '';
+    } else {
+      this.markerElement.innerHTML = renderTemplate(modelState.ui.indicator_html, this.templateData) || '<div class="model-indicator default-indicator"></div>';
+    }
+
+    if (this.plugin?.renderTooltip !== undefined) {
+      this.popupCard.innerHTML = this.plugin.renderTooltip({
+        ...pluginContext,
+        templateData: this.templateData,
+      }) || '';
+    } else {
+      this.popupCard.innerHTML = renderTemplate(modelState.ui.tooltip_html, this.templateData) || `
+        <div class="simulation-popup-header">
+          <span class="simulation-popup-title">${modelState.display_name}</span>
+          <button type="button" class="simulation-popup-close" aria-label="Close popup">x</button>
+        </div>
+        <div class="simulation-popup-body">
+          <pre class="vehicle-json">${JSON.stringify(modelState.state, null, 2)}</pre>
+        </div>
+      `;
+    }
+
+    if (this.plugin?.onOverlayUpdate !== undefined) {
+      this.plugin.onOverlayUpdate({
+        ...pluginContext,
+        templateData: this.templateData,
+      });
+    }
     this.applyPopupOffset();
-
-    return new ol.Overlay({
-      element: popupElem
-    });
   }
 
   openPopup() {
-    this.popupOverlay.getElement().classList.add('open');
-  }
-
-  isPopupOpen() {
-    return this.popupOverlay.getElement().classList.contains('open');
+    this.popupElement.classList.add('open');
   }
 
   closePopup() {
-    this.popupOverlay.getElement().classList.remove('open');
+    this.ui.suppressMapClicks();
+    this.popupElement.classList.remove('open');
   }
 
   focusOnMap(map) {
@@ -183,34 +315,17 @@ class TrafficLight {
     this.popupCard.style.transform = `translate(calc(-50% + ${this.popupOffset.x}px), calc(-100% + ${this.popupOffset.y}px))`;
   }
 
-  setPopupContent(trafficLightState) {
-    const positionOnRoute = trafficLightState.position_on_route ?? trafficLightState.position_on_track ?? 0;
-    const timing = buildTimingVisualization(trafficLightState.period, trafficLightState.ratio, trafficLightState.t);
-
-    this.popupStateValue.textContent = trafficLightState.state.toUpperCase();
-    this.popupStateBadge.textContent = trafficLightState.state.toUpperCase();
-    this.popupStateBadge.dataset.state = trafficLightState.state;
-    this.popupPeriodValue.textContent = `${formatNumber(trafficLightState.period, 1)} s`;
-    this.popupRatioValue.textContent = formatNumber(trafficLightState.ratio, 2);
-    this.popupTimeValue.textContent = `${formatNumber(trafficLightState.t, 2)} s`;
-    this.popupPositionValue.textContent = metersToDisplay(positionOnRoute);
-
-    this.progressSegments.red.style.width = `${timing.redFraction * 100}%`;
-    this.progressSegments.yellow.style.width = `${timing.yellowFraction * 100}%`;
-    this.progressSegments.green.style.width = `${timing.greenFraction * 100}%`;
-    this.popupMarker.style.left = `${timing.progress * 100}%`;
-  }
-
-  update(trafficLightState) {
-    if (trafficLightState.state === 'red') {
-      this.feature.setStyle(styles['traffic_light_red']);
-    } else if (trafficLightState.state === 'yellow') {
-      this.feature.setStyle(styles['traffic_light_yellow']);
-    } else {
-      this.feature.setStyle(styles['traffic_light_green']);
+  destroy() {
+    if (this.pluginInitialized && this.plugin?.onOverlayDestroy !== undefined) {
+      this.plugin.onOverlayDestroy({
+        feature: this.feature,
+        indicatorElement: this.markerElement,
+        overlay: this,
+        popupElement: this.popupElement,
+        popupCard: this.popupCard,
+        templateData: this.templateData,
+      });
     }
-
-    this.setPopupContent(trafficLightState);
   }
 }
 
@@ -226,26 +341,26 @@ class ControlMenu {
     this.currentSpeedField = document.getElementById('vehicle_speed');
     this.targetSpeedField = document.getElementById('target_speed');
     this.accelerationValueField = document.getElementById('acceleration_value');
-    this.trafficLightCountField = document.getElementById('traffic_light_count');
+    this.modelCountField = document.getElementById('simulation_model_count');
     this.vehicleLatitudeField = document.getElementById('vehicle_latitude');
     this.vehicleLongitudeField = document.getElementById('vehicle_longitude');
     this.targetVelocityValueField = document.getElementById('target_velocity_value');
     this.accelerationSliderValueField = document.getElementById('acceleration_slider_value');
 
-    this.vehiclePositionSlider.oninput = (() => {
+    this.vehiclePositionSlider.oninput = () => {
       this.positionValueField.textContent = metersToDisplay(this.vehiclePositionSlider.value);
       $.get(`${apiBaseUrl}/api/actions/set_vehicle_position`, { position: this.vehiclePositionSlider.value });
-    });
+    };
 
-    this.targetVelocitySlider.oninput = (() => {
+    this.targetVelocitySlider.oninput = () => {
       this.targetVelocityValueField.textContent = `${this.targetVelocitySlider.value} km/h`;
       this.pushVehicleOutput();
-    });
+    };
 
-    this.accelerationSlider.oninput = (() => {
+    this.accelerationSlider.oninput = () => {
       this.accelerationSliderValueField.textContent = `${formatNumber(this.accelerationSlider.value)} m/s²`;
       this.pushVehicleOutput();
-    });
+    };
 
     $.get(`${apiBaseUrl}/api/actions/get_route_information`, (data) => {
       this.vehiclePositionSlider.max = parseInt(data.length, 10);
@@ -256,7 +371,7 @@ class ControlMenu {
   pushVehicleOutput() {
     $.get(`${apiBaseUrl}/api/actions/set_vehicle_output`, {
       acceleration: this.accelerationSlider.value,
-      target_velocity: this.targetVelocitySlider.value
+      target_velocity: this.targetVelocitySlider.value,
     });
   }
 
@@ -287,28 +402,29 @@ class ControlMenu {
 
   handleSimulationStateUpdate(simulationState) {
     this.updateVehicleInformation(simulationState.vehicle_state);
-    this.trafficLightCountField.textContent = simulationState.traffic_lights_state.length;
+    this.modelCountField.textContent = simulationState.models.length;
   }
 }
 
 class UI {
 
   constructor() {
-    this.trafficLightsByIdMap = new Map();
-    this.trafficLightOverviewRowMap = new Map();
     this.controlMenu = new ControlMenu();
     this.followVehicle = false;
+    this.suppressMapClicksUntil = 0;
     this.latestVehicleCoordinate = null;
+    this.overlaysByModelId = new Map();
+    this.uiPluginManager = new ModelUiResourceManager();
     this.centerVehicleButton = document.getElementById('center_vehicle_button');
     this.followVehicleButton = document.getElementById('follow_vehicle_button');
-    this.trafficLightOverviewList = document.getElementById('traffic_light_overview_list');
+    this.modelOverviewList = document.getElementById('simulation_model_list');
 
     this.routeLayer = new ol.layer.Vector({
       source: new ol.source.Vector({
         url: 'routes/ostfalia-wf-wob.gpx',
         format: new ol.format.GPX(),
       }),
-      style: (feature) => styles[feature.getGeometry().getType()],
+      style: (feature) => baseStyles[feature.getGeometry().getType()],
     });
 
     this.vehicleMarker = new ol.Feature({
@@ -318,27 +434,27 @@ class UI {
 
     this.vehicleMarkerLayer = new ol.layer.Vector({
       source: new ol.source.Vector({
-        features: [this.vehicleMarker]
+        features: [this.vehicleMarker],
       }),
-      style: (feature) => styles[feature.get('type')],
+      style: (feature) => baseStyles[feature.get('type')],
     });
 
-    this.trafficLightLayer = new ol.layer.Vector({
+    this.modelMarkerLayer = new ol.layer.Vector({
       source: new ol.source.Vector({}),
-      style: (feature) => styles[feature.get('type')],
+      style: (feature) => feature.getStyle(),
     });
 
     this.osmLayer = new ol.layer.Tile({
-      source: new ol.source.OSM()
+      source: new ol.source.OSM(),
     });
 
     this.map = new ol.Map({
-      layers: [this.osmLayer, this.routeLayer, this.vehicleMarkerLayer, this.trafficLightLayer],
+      layers: [this.osmLayer, this.routeLayer, this.vehicleMarkerLayer, this.modelMarkerLayer],
       view: new ol.View({
         center: ol.proj.fromLonLat([10.547558, 52.176758]),
-        zoom: 15
+        zoom: 15,
       }),
-      target: 'map'
+      target: 'map',
     });
 
     this.centerVehicleButton.addEventListener('click', () => {
@@ -353,42 +469,60 @@ class UI {
       }
     });
 
-    this.updateFollowVehicleButton();
-
-    this.trafficLightOverviewList.addEventListener('click', (event) => {
-      const row = event.target.closest('[data-traffic-light-id]');
+    this.modelOverviewList.addEventListener('click', (event) => {
+      const row = event.target.closest('[data-model-id]');
       if (row === null) {
         return;
       }
 
-      const trafficLightId = Number(row.dataset.trafficLightId);
-      const trafficLight = this.trafficLightsByIdMap.get(trafficLightId);
-      if (trafficLight === undefined) {
+      const modelOverlay = this.overlaysByModelId.get(row.dataset.modelId);
+      if (modelOverlay === undefined) {
         return;
       }
 
-      if (this.followVehicle) {
-        this.followVehicle = false;
-        this.updateFollowVehicleButton();
-      }
-
-      trafficLight.focusOnMap(this.map);
-      trafficLight.openPopup();
+      this.disableFollowVehicle();
+      modelOverlay.focusOnMap(this.map);
+      modelOverlay.openPopup();
     });
 
     this.map.on('click', (evt) => {
-      let trafficLightFeature;
-
-      this.map.forEachFeatureAtPixel(evt.pixel, (feature) => {
-        trafficLightFeature = feature;
-      });
-
-      for (const trafficLight of this.trafficLightsByIdMap.values()) {
-        if (trafficLightFeature === trafficLight.feature) {
-          trafficLight.openPopup();
+      const originalTarget = evt.originalEvent?.target;
+      if (originalTarget instanceof Element) {
+        if (originalTarget.closest('.simulation-popup-anchor') !== null || originalTarget.closest('.model-indicator-host') !== null) {
+          return;
         }
       }
+
+      if (Date.now() < this.suppressMapClicksUntil) {
+        return;
+      }
+
+      let selectedFeature;
+      this.map.forEachFeatureAtPixel(evt.pixel, (feature) => {
+        selectedFeature = feature;
+      });
+
+      this.overlaysByModelId.forEach((overlay) => {
+        if (overlay.feature === selectedFeature) {
+          overlay.openPopup();
+        }
+      });
     });
+
+    this.updateFollowVehicleButton();
+  }
+
+  suppressMapClicks(durationMs = 250) {
+    this.suppressMapClicksUntil = Date.now() + durationMs;
+  }
+
+  disableFollowVehicle() {
+    if (!this.followVehicle) {
+      return;
+    }
+
+    this.followVehicle = false;
+    this.updateFollowVehicleButton();
   }
 
   setVehiclePosition(lon, lat) {
@@ -406,7 +540,7 @@ class UI {
     if (animate) {
       view.animate({
         center: this.latestVehicleCoordinate,
-        duration: 250
+        duration: 250,
       });
       return;
     }
@@ -419,114 +553,92 @@ class UI {
     this.followVehicleButton.classList.toggle('active', this.followVehicle);
   }
 
-  createTrafficLightOverviewRow(trafficLightId) {
-    const row = document.createElement('button');
-    row.type = 'button';
-    row.className = 'topic-list-row';
-    row.dataset.trafficLightId = `${trafficLightId}`;
-    row.innerHTML = `
-      <div class="topic-list-id"></div>
-      <div><span class="topic-state-pill"></span></div>
-      <div class="topic-position"></div>
-      <div class="topic-timing">
-        <div class="topic-timing-meta">
-          <span class="topic-period"></span>
-          <span class="topic-ratio"></span>
-          <span class="topic-clock"></span>
-        </div>
-        <div class="topic-phase-track">
-          <div class="topic-phase-segment red"></div>
-          <div class="topic-phase-segment yellow"></div>
-          <div class="topic-phase-segment green"></div>
-          <div class="topic-phase-marker"></div>
-        </div>
-      </div>
-    `;
+  findOrCreateModelOverlay(modelState) {
+    let overlay = this.overlaysByModelId.get(modelState.model_id);
+    if (overlay !== undefined) {
+      return overlay;
+    }
 
-    const elements = {
-      root: row,
-      id: row.querySelector('.topic-list-id'),
-      state: row.querySelector('.topic-state-pill'),
-      position: row.querySelector('.topic-position'),
-      period: row.querySelector('.topic-period'),
-      ratio: row.querySelector('.topic-ratio'),
-      clock: row.querySelector('.topic-clock'),
-      redSegment: row.querySelector('.topic-phase-segment.red'),
-      yellowSegment: row.querySelector('.topic-phase-segment.yellow'),
-      greenSegment: row.querySelector('.topic-phase-segment.green'),
-      marker: row.querySelector('.topic-phase-marker'),
-    };
-
-    this.trafficLightOverviewRowMap.set(trafficLightId, elements);
-    return elements;
+    overlay = new GenericModelOverlay(modelState.model_id, modelState.map_position, this.uiPluginManager, this);
+    this.overlaysByModelId.set(modelState.model_id, overlay);
+    this.modelMarkerLayer.getSource().addFeature(overlay.feature);
+    this.map.addOverlay(overlay.indicatorOverlay);
+    this.map.addOverlay(overlay.popupOverlay);
+    return overlay;
   }
 
-  renderTrafficLightOverview(trafficLightsState) {
-    if (trafficLightsState.length === 0) {
-      this.trafficLightOverviewList.innerHTML = '<div class="topic-list-empty">No traffic lights available in the current scenario.</div>';
-      this.trafficLightOverviewRowMap.clear();
-      return;
+  async renderModelOverview(modelState) {
+    const plugin = await this.uiPluginManager.ensureResources(modelState);
+    let templateData = createTemplateData(modelState);
+    if (plugin?.extendTemplateData !== undefined) {
+      const extraTemplateData = plugin.extendTemplateData({
+        helpers: pluginHelpers,
+        modelState,
+        templateData,
+      }) || {};
+      templateData = createTemplateData(modelState, extraTemplateData);
     }
+    const wrapper = document.createElement('button');
+    wrapper.type = 'button';
+    wrapper.className = 'topic-list-row topic-list-card';
+    wrapper.dataset.modelId = modelState.model_id;
+    if (plugin?.renderOverview !== undefined) {
+      wrapper.innerHTML = plugin.renderOverview({
+        helpers: pluginHelpers,
+        modelState,
+        templateData,
+      }) || '';
+    } else {
+      wrapper.innerHTML = renderTemplate(modelState.ui.overview_html, templateData) || `
+        <article class="model-card">
+          <header class="model-card-header">
+            <strong class="model-card-title">${modelState.display_name}</strong>
+            <span class="topic-state-pill">${modelState.model_type}</span>
+          </header>
+          <pre class="vehicle-json">${JSON.stringify(modelState.state, null, 2)}</pre>
+        </article>
+      `;
+    }
+    return wrapper;
+  }
 
-    if (this.trafficLightOverviewList.querySelector('.topic-list-empty') !== null) {
-      this.trafficLightOverviewList.innerHTML = '';
-    }
+  async syncModels(models) {
+    this.modelOverviewList.innerHTML = '';
 
     const activeIds = new Set();
+    for (const modelState of models) {
+      activeIds.add(modelState.model_id);
+      this.modelOverviewList.appendChild(await this.renderModelOverview(modelState));
 
-    trafficLightsState.forEach((trafficLightState) => {
-      const trafficLightId = trafficLightState.id;
-      activeIds.add(trafficLightId);
-      const positionOnRoute = trafficLightState.position_on_route ?? trafficLightState.position_on_track ?? 0;
-      const timing = buildTimingVisualization(trafficLightState.period, trafficLightState.ratio, trafficLightState.t);
-      let rowElements = this.trafficLightOverviewRowMap.get(trafficLightId);
-
-      if (rowElements === undefined) {
-        rowElements = this.createTrafficLightOverviewRow(trafficLightId);
-        this.trafficLightOverviewList.appendChild(rowElements.root);
+      if (modelState.map_position === null) {
+        continue;
       }
 
-      rowElements.id.textContent = `TL-${trafficLightId}`;
-      rowElements.state.className = `topic-state-pill ${trafficLightState.state}`;
-      rowElements.state.textContent = trafficLightState.state;
-      rowElements.position.textContent = metersToDisplay(positionOnRoute);
-      rowElements.period.textContent = `Period ${formatNumber(trafficLightState.period, 1)} s`;
-      rowElements.ratio.textContent = `Ratio ${formatNumber(trafficLightState.ratio, 2)}`;
-      rowElements.clock.textContent = `Clock ${formatNumber(trafficLightState.t, 2)} s`;
-      rowElements.redSegment.style.width = `${timing.redFraction * 100}%`;
-      rowElements.yellowSegment.style.width = `${timing.yellowFraction * 100}%`;
-      rowElements.greenSegment.style.width = `${timing.greenFraction * 100}%`;
-      rowElements.marker.style.left = `${timing.progress * 100}%`;
-    });
+      const overlay = this.findOrCreateModelOverlay(modelState);
+      await overlay.update(modelState);
+    }
 
-    Array.from(this.trafficLightOverviewRowMap.keys()).forEach((trafficLightId) => {
-      if (activeIds.has(trafficLightId)) {
+    Array.from(this.overlaysByModelId.keys()).forEach((modelId) => {
+      if (activeIds.has(modelId)) {
         return;
       }
 
-      const rowElements = this.trafficLightOverviewRowMap.get(trafficLightId);
-      rowElements.root.remove();
-      this.trafficLightOverviewRowMap.delete(trafficLightId);
+      const overlay = this.overlaysByModelId.get(modelId);
+      overlay.destroy();
+      this.modelMarkerLayer.getSource().removeFeature(overlay.feature);
+      this.map.removeOverlay(overlay.indicatorOverlay);
+      this.map.removeOverlay(overlay.popupOverlay);
+      this.overlaysByModelId.delete(modelId);
     });
-  }
 
-  findOrCreateTrafficLight(trafficLightState) {
-    const id = trafficLightState.id;
-    let trafficLight = this.trafficLightsByIdMap.get(id);
-
-    if (trafficLight === undefined) {
-      trafficLight = new TrafficLight(id, trafficLightState.lon, trafficLightState.lat);
-      this.trafficLightsByIdMap.set(id, trafficLight);
-      this.trafficLightLayer.getSource().addFeature(trafficLight.feature);
-      this.map.addOverlay(trafficLight.popupOverlay);
+    if (models.length === 0) {
+      this.modelOverviewList.innerHTML = '<div class="topic-list-empty">No simulation models loaded for the current scenario.</div>';
     }
-
-    return trafficLight;
   }
 
-  handleSimulationStateUpdate(simulationState) {
+  async handleSimulationStateUpdate(simulationState) {
     this.controlMenu.handleSimulationStateUpdate(simulationState);
-    this.renderTrafficLightOverview(simulationState.traffic_lights_state);
+    await this.syncModels(simulationState.models || []);
 
     const vehicleLon = simulationState.vehicle_state.position_coordinates.lon;
     const vehicleLat = simulationState.vehicle_state.position_coordinates.lat;
@@ -535,12 +647,6 @@ class UI {
 
     if (this.followVehicle) {
       this.centerOnVehicle(false);
-    }
-
-    for (let i = 0; i < simulationState.traffic_lights_state.length; i += 1) {
-      const trafficLightState = simulationState.traffic_lights_state[i];
-      const trafficLight = this.findOrCreateTrafficLight(trafficLightState);
-      trafficLight.update(trafficLightState);
     }
   }
 }

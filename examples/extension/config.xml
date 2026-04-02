@@ -1,0 +1,6 @@
+<ConnectedCarSimulationConfig>
+    <ExampleModels>
+        <ExampleModel id="1" position_on_route="50.0"/>
+        <ExampleModel id="2" position_on_route="100.0"/>
+    </ExampleModels>
+</ConnectedCarSimulationConfig>

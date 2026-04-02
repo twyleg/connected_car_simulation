@@ -1,0 +1,43 @@
+<div class="model-tooltip traffic-light-tooltip">
+    <div class="simulation-popup-header">
+        <span class="simulation-popup-title">{{display_name}}</span>
+        <button type="button" class="simulation-popup-close" aria-label="Close popup">x</button>
+    </div>
+    <div class="simulation-popup-body">
+        <div class="traffic-light-popup-state-row">
+            <span class="simulation-state-badge" data-state="{{state}}">{{state_upper}}</span>
+            <strong class="traffic-light-state-value">{{state_upper}}</strong>
+        </div>
+        <div class="traffic-light-popup-progress">
+            <div class="traffic-light-popup-progress-track">
+                <div class="traffic-light-progress-segment segment-red" style="width: {{red_width}};"></div>
+                <div class="traffic-light-progress-segment segment-yellow" style="width: {{yellow_width}};"></div>
+                <div class="traffic-light-progress-segment segment-green" style="width: {{green_width}};"></div>
+                <div class="traffic-light-progress-marker" style="left: {{progress_left}};"></div>
+            </div>
+            <div class="traffic-light-popup-progress-labels">
+                <span class="phase-label">Red</span>
+                <span class="phase-label">Yellow</span>
+                <span class="phase-label">Green</span>
+            </div>
+        </div>
+        <div class="simulation-popup-grid">
+            <div class="popup-metric">
+                <span class="popup-metric-label">Position</span>
+                <strong>{{position_display}}</strong>
+            </div>
+            <div class="popup-metric">
+                <span class="popup-metric-label">Period</span>
+                <strong>{{period_display}}</strong>
+            </div>
+            <div class="popup-metric">
+                <span class="popup-metric-label">Red ratio</span>
+                <strong>{{ratio_display}}</strong>
+            </div>
+            <div class="popup-metric">
+                <span class="popup-metric-label">Clock</span>
+                <strong>{{time_display}}</strong>
+            </div>
+        </div>
+    </div>
+</div>

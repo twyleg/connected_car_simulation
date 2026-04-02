@@ -9,7 +9,8 @@ STOP_DISTANCE_THRESHOLD = 30.0
 
 
 def get_next_traffic_light(vehicle_input: Dict[str, Any]) -> Dict[str, Any] | None:
-    traffic_lights: List[Dict[str, Any]] = vehicle_input.get("traffic_lights", [])
+    models: Dict[str, Any] = vehicle_input.get("models", {})
+    traffic_lights: List[Dict[str, Any]] = models.get("traffic_lights", [])
     if not traffic_lights:
         return None
     return traffic_lights[0]

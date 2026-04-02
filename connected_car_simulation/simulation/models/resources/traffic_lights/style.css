@@ -1,0 +1,137 @@
+.traffic-light-overview-row {
+    display: grid;
+    grid-template-columns: 88px 120px 120px minmax(0, 1fr);
+    gap: 14px;
+    align-items: center;
+    padding: 14px 16px;
+}
+
+.traffic-light-overview-row .topic-position {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.traffic-light-overview-row .topic-timing {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.traffic-light-overview-row .topic-timing-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+.traffic-light-overview-row .topic-phase-track {
+    position: relative;
+    display: flex;
+    height: 10px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.traffic-light-overview-row .topic-phase-segment {
+    height: 100%;
+}
+
+.traffic-light-overview-row .topic-phase-segment.red {
+    background: #ff6f61;
+}
+
+.traffic-light-overview-row .topic-phase-segment.yellow {
+    background: #ffb347;
+}
+
+.traffic-light-overview-row .topic-phase-segment.green {
+    background: #4dd0a8;
+}
+
+.traffic-light-overview-row .topic-phase-marker {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    width: 3px;
+    margin-left: -1.5px;
+    border-radius: 999px;
+    background: #f5f9ff;
+}
+
+.traffic-light-tooltip .traffic-light-popup-state-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.traffic-light-tooltip .traffic-light-state-value {
+    color: #f5f9ff;
+    font-size: 1rem;
+}
+
+.traffic-light-tooltip .traffic-light-popup-progress {
+    margin-bottom: 14px;
+}
+
+.traffic-light-tooltip .traffic-light-popup-progress-track {
+    position: relative;
+    display: flex;
+    height: 14px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.traffic-light-tooltip .traffic-light-progress-segment {
+    height: 100%;
+}
+
+.traffic-light-tooltip .segment-red {
+    background: #ff6f61;
+}
+
+.traffic-light-tooltip .segment-yellow {
+    background: #ffb347;
+}
+
+.traffic-light-tooltip .segment-green {
+    background: #4dd0a8;
+}
+
+.traffic-light-tooltip .traffic-light-progress-marker {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    width: 3px;
+    margin-left: -1.5px;
+    border-radius: 999px;
+    background: #f5f9ff;
+    box-shadow: 0 0 0 2px rgba(8, 17, 31, 0.6);
+}
+
+.traffic-light-tooltip .traffic-light-popup-progress-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+@media (max-width: 1199.98px) {
+    .traffic-light-overview-row {
+        grid-template-columns: 72px 110px 110px minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 767.98px) {
+    .traffic-light-overview-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+}

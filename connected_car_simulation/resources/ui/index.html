@@ -22,7 +22,7 @@
             <div>
                 <p class="eyebrow">Realtime Demo</p>
                 <h1 class="hero-title">Connected Car Control Center</h1>
-                <p class="hero-subtitle">Monitor the simulated vehicle, inspect traffic lights, and steer the scenario live on the map.</p>
+                <p class="hero-subtitle">Monitor the simulated vehicle, inspect simulation models, and steer the scenario live on the map.</p>
             </div>
             <div class="status-pill-group">
                 <span id="connection_status" class="status-pill offline">Socket offline</span>
@@ -64,9 +64,9 @@
                             </div>
                             <div class="col-6">
                                 <div class="metric-card">
-                                    <span class="metric-label">Traffic lights</span>
-                                    <strong id="traffic_light_count" class="metric-value">0</strong>
-                                    <span class="metric-unit">active</span>
+                                    <span class="metric-label">Simulation models</span>
+                                    <strong id="simulation_model_count" class="metric-value">0</strong>
+                                    <span class="metric-unit">loaded</span>
                                 </div>
                             </div>
                         </div>
@@ -141,7 +141,7 @@
                                 <h2 class="section-title">Live route view</h2>
                             </div>
                             <div class="map-header-tools">
-                                <p class="map-help">Click a traffic light marker to inspect its current timing state.</p>
+                                <p class="map-help">Click a simulation marker to inspect its current state.</p>
                                 <div class="map-button-group">
                                     <button id="center_vehicle_button" type="button" class="btn map-action-button">Center on vehicle</button>
                                     <button id="follow_vehicle_button" type="button" class="btn map-action-button toggle-button">Follow vehicle: Off</button>
@@ -155,80 +155,15 @@
                         <div class="card-header-row topic-card-header">
                             <div>
                                 <p class="section-label">Details</p>
-                                <h2 class="section-title">Simulation topics</h2>
+                                <h2 class="section-title">Simulation models</h2>
                             </div>
-                            <p class="map-help">Use tabs here for traffic lights now and future simulation elements later.</p>
+                            <p class="map-help">Each model instance can contribute overview content, a map indicator, and a tooltip through backend-provided HTML templates.</p>
                         </div>
-
-                        <ul class="nav topic-tabs" id="simulation_topic_tabs" role="tablist">
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="traffic-lights-tab" data-toggle="tab" data-target="#traffic-lights-panel" type="button" role="tab" aria-controls="traffic-lights-panel" aria-selected="true">
-                                    Traffic lights
-                                </button>
-                            </li>
-                        </ul>
-
-                        <div class="tab-content topic-tab-content">
-                            <div class="tab-pane fade show active" id="traffic-lights-panel" role="tabpanel" aria-labelledby="traffic-lights-tab">
-                                <div class="topic-list-header">
-                                    <span>ID</span>
-                                    <span>State</span>
-                                    <span>Position</span>
-                                    <span>Timing</span>
-                                </div>
-                                <div id="traffic_light_overview_list" class="topic-list"></div>
-                            </div>
-                        </div>
+                        <div id="simulation_model_list" class="topic-list"></div>
                     </div>
                 </section>
             </div>
         </main>
     </div>
-
-    <template id="traffic_light_popup_template">
-        <div class="traffic-light-popup">
-            <div class="traffic-light-popup-header">
-                <span class="traffic-light-popup-title">Traffic Light</span>
-                <button type="button" class="traffic-light-popup-close" aria-label="Close popup">x</button>
-            </div>
-            <div class="traffic-light-popup-body">
-                <div class="traffic-light-popup-state-row">
-                    <span class="traffic-light-state-badge">State</span>
-                    <strong class="traffic-light-state-value">-</strong>
-                </div>
-                <div class="traffic-light-popup-progress">
-                    <div class="traffic-light-popup-progress-track">
-                        <div class="traffic-light-progress-segment segment-red"></div>
-                        <div class="traffic-light-progress-segment segment-yellow"></div>
-                        <div class="traffic-light-progress-segment segment-green"></div>
-                        <div class="traffic-light-progress-marker"></div>
-                    </div>
-                    <div class="traffic-light-popup-progress-labels">
-                        <span class="phase-label">Red</span>
-                        <span class="phase-label">Yellow</span>
-                        <span class="phase-label">Green</span>
-                    </div>
-                </div>
-                <div class="traffic-light-popup-grid">
-                    <div class="popup-metric">
-                        <span class="popup-metric-label">Period</span>
-                        <strong class="popup-period-value">-</strong>
-                    </div>
-                    <div class="popup-metric">
-                        <span class="popup-metric-label">Red ratio</span>
-                        <strong class="popup-ratio-value">-</strong>
-                    </div>
-                    <div class="popup-metric">
-                        <span class="popup-metric-label">Clock</span>
-                        <strong class="popup-time-value">-</strong>
-                    </div>
-                    <div class="popup-metric">
-                        <span class="popup-metric-label">Position</span>
-                        <strong class="popup-position-value">-</strong>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </template>
 </body>
 </html>

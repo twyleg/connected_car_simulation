@@ -3,7 +3,7 @@
     "info": {
         "title": "Connected Car Simulation API",
         "version": "1.0.0",
-        "description": "HTTP API for controlling and inspecting the connected car simulation. The simulator UI uses these endpoints to drive the vehicle model and to retrieve route and traffic-light data."
+        "description": "HTTP API for controlling and inspecting the connected car simulation. The simulator UI uses these endpoints to drive the vehicle model and to retrieve route and simulation-model data."
     },
     "servers": [],
     "paths": {
@@ -102,7 +102,7 @@
                 "summary": "Get infrastructure data within radio range",
                 "responses": {
                     "200": {
-                        "description": "Vehicle input limited to traffic lights within radio range.",
+                        "description": "Vehicle input limited to model data within radio range.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -119,7 +119,7 @@
                 "summary": "Get full infrastructure input",
                 "responses": {
                     "200": {
-                        "description": "Vehicle input with all traffic lights from the scenario.",
+                        "description": "Vehicle input with all registered simulation model data from the scenario.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -301,22 +301,104 @@
                     "t"
                 ]
             },
+            "ModelSummary": {
+                "type": "object",
+                "properties": {
+                    "label": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "type": "integer"
+                    },
+                    "unit": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "label",
+                    "value",
+                    "unit"
+                ]
+            },
+            "ModelOverview": {
+                "type": "object",
+                "properties": {
+                    "overview_html": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "indicator_html": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "tooltip_html": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "style_css": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "script_js": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "overview_html",
+                    "indicator_html",
+                    "tooltip_html",
+                    "style_css",
+                    "script_js"
+                ]
+            },
+            "SimulationModelState": {
+                "type": "object",
+                "properties": {
+                    "model_id": {
+                        "type": "string"
+                    },
+                    "model_type": {
+                        "type": "string"
+                    },
+                    "display_name": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "map_position": {
+                        "$ref": "#/components/schemas/Coordinates"
+                    },
+                    "ui": {
+                        "$ref": "#/components/schemas/ModelOverview"
+                    }
+                },
+                "required": [
+                    "model_id",
+                    "model_type",
+                    "display_name",
+                    "state",
+                    "ui"
+                ]
+            },
             "SimulationState": {
                 "type": "object",
                 "properties": {
                     "vehicle_state": {
                         "$ref": "#/components/schemas/SimulationVehicleState"
                     },
-                    "traffic_lights_state": {
+                    "models": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/TrafficLightState"
+                            "$ref": "#/components/schemas/SimulationModelState"
                         }
                     }
                 },
                 "required": [
                     "vehicle_state",
-                    "traffic_lights_state"
+                    "models"
                 ]
             },
             "RouteInformation": {
@@ -358,17 +440,15 @@
                     "map": {
                         "$ref": "#/components/schemas/MapData"
                     },
-                    "traffic_lights": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/TrafficLightOutput"
-                        }
+                    "models": {
+                        "type": "object",
+                        "additionalProperties": true
                     }
                 },
                 "required": [
                     "vehicle_state",
                     "map",
-                    "traffic_lights"
+                    "models"
                 ]
             }
         }

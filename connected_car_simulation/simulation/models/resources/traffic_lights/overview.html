@@ -1,0 +1,18 @@
+<article class="traffic-light-overview-row">
+    <div class="topic-list-id">TL-{{id}}</div>
+    <div><span class="topic-state-pill {{state}}">{{state}}</span></div>
+    <div class="topic-position">{{position_display}}</div>
+    <div class="topic-timing">
+        <div class="topic-timing-meta">
+            <span class="topic-period">Period {{period_display}}</span>
+            <span class="topic-ratio">Ratio {{ratio_display}}</span>
+            <span class="topic-clock">Clock {{time_display}}</span>
+        </div>
+        <div class="topic-phase-track">
+            <div class="topic-phase-segment red" style="width: {{red_width}};"></div>
+            <div class="topic-phase-segment yellow" style="width: {{yellow_width}};"></div>
+            <div class="topic-phase-segment green" style="width: {{green_width}};"></div>
+            <div class="topic-phase-marker" style="left: {{progress_left}};"></div>
+        </div>
+    </div>
+</article>
