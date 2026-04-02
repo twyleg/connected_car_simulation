@@ -1,8 +1,10 @@
+#!/usr/bin/env python
 import asyncio
 from pathlib import Path
 
 from connected_car_simulation.simulation import ConnectedCarSimulation
-from examples.extension.models.example_model import ExampleModelFactory
+
+from models.example_model import ExampleModelFactory
 
 
 FILE_DIR = Path(__file__).parent

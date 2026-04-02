@@ -169,12 +169,12 @@ class GenericModelOverlay {
       positioning: 'center-center',
     });
 
-    this.markerElement.addEventListener('click', (event) => {
+    this.markerElement.addEventListener('pointerdown', (event) => {
       this.ui.suppressMapClicks();
       event.preventDefault();
       event.stopPropagation();
       this.openPopup();
-    });
+    }, true);
 
     this.popupElement.addEventListener('pointerdown', (event) => {
       const closeButton = event.target.closest('.simulation-popup-close');
