@@ -1,0 +1,3 @@
+[submodule "extern/connected_car_simulation_examples"]
+	path = extern/connected_car_simulation_examples
+	url = git@github.com:twyleg/connected_car_simulation_examples.git
