@@ -21,6 +21,7 @@ class SimulationApi:
         self.simulation_environment = simulation_environment
         self.action_handlers: Dict[str, Callable[[Dict[str, Any]], Dict[str, Any]]] = {
             "get_simulation_state": lambda _: self.get_simulation_state(),
+            "get_model_ui_resources": lambda _: self.get_model_ui_resources(),
             "get_route_information": lambda _: self.get_route_information(),
             "get_vehicle_input_adhoc": lambda _: self.get_vehicle_input_adhoc(),
             "get_vehicle_input_infrastructure": lambda _: self.get_vehicle_input_infrastructure(),
@@ -29,6 +30,7 @@ class SimulationApi:
         }
         self.required_action_parameters: Dict[str, set[str]] = {
             "get_simulation_state": set(),
+            "get_model_ui_resources": set(),
             "get_route_information": set(),
             "get_vehicle_input_adhoc": set(),
             "get_vehicle_input_infrastructure": set(),
@@ -55,6 +57,9 @@ class SimulationApi:
 
     def get_simulation_state(self) -> Dict[str, Any]:
         return self.simulation_environment.get_simulation_state()
+
+    def get_model_ui_resources(self) -> Dict[str, Any]:
+        return self.simulation_environment.get_model_ui_resources()
 
     def get_route_information(self) -> Dict[str, Any]:
         return self.simulation_environment.get_route_information()

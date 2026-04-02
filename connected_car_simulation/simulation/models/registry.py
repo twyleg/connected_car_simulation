@@ -60,6 +60,12 @@ class SimulationModelRegistry:
     def get_simulation_state(self) -> List[Dict[str, Any]]:
         return [model.get_simulation_state(self.route) for model in self.models]
 
+    def get_model_ui_resources(self) -> Dict[str, Dict[str, Optional[str]]]:
+        resources_by_model_type: Dict[str, Dict[str, Optional[str]]] = {}
+        for model in self.models:
+            resources_by_model_type.setdefault(model.model_type, model.get_ui_resources())
+        return resources_by_model_type
+
     def get_vehicle_input(self, vehicle_state: Dict[str, Any], max_distance: Optional[float] = None) -> Dict[str, Any]:
         grouped_models: Dict[str, List[Any]] = {}
         vehicle_position = float(vehicle_state["position_on_route"])

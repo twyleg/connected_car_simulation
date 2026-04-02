@@ -31,6 +31,9 @@ class SimulationEnvironment:
         }
         return simulation_state
 
+    def get_model_ui_resources(self) -> Dict[str, Dict[str, Any]]:
+        return self.models.get_model_ui_resources()
+
     def get_route_information(self) -> Dict:
         simulation_state = {
             'length': self.route.get_length(),

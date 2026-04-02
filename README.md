@@ -80,6 +80,7 @@ The simulator provides these main HTTP endpoints:
 - `GET /api/actions/set_vehicle_output`
 - `GET /api/actions/set_vehicle_position`
 - `GET /api/actions/get_simulation_state`
+- `GET /api/actions/get_model_ui_resources`
 - `GET /api/actions/get_route_information`
 - `GET /api/actions/get_vehicle_input_adhoc`
 - `GET /api/actions/get_vehicle_input_infrastructure`

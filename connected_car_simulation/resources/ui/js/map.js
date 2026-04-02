@@ -67,52 +67,65 @@ function renderTemplate(template, templateData) {
 class ModelUiResourceManager {
 
   constructor() {
+    this.resourcesByModelType = new Map();
     this.styleElementsByModelType = new Map();
     this.pluginPromisesByModelType = new Map();
     this.pluginUrlsByModelType = new Map();
   }
 
-  ensureResources(modelState) {
-    this.ensureStyle(modelState);
-    return this.ensurePlugin(modelState);
+  registerResources(resourcesByModelType) {
+    Object.entries(resourcesByModelType || {}).forEach(([modelType, resources]) => {
+      this.resourcesByModelType.set(modelType, resources || {});
+    });
   }
 
-  ensureStyle(modelState) {
-    const cssText = modelState.ui.style_css;
-    if (!cssText || this.styleElementsByModelType.has(modelState.model_type)) {
+  getResources(modelType) {
+    return this.resourcesByModelType.get(modelType) || null;
+  }
+
+  ensureResources(modelType) {
+    this.ensureStyle(modelType);
+    return this.ensurePlugin(modelType);
+  }
+
+  ensureStyle(modelType) {
+    const resources = this.getResources(modelType);
+    const cssText = resources?.style_css;
+    if (!cssText || this.styleElementsByModelType.has(modelType)) {
       return;
     }
 
     const styleElement = document.createElement('style');
-    styleElement.dataset.modelType = modelState.model_type;
+    styleElement.dataset.modelType = modelType;
     styleElement.textContent = cssText;
     document.head.appendChild(styleElement);
-    this.styleElementsByModelType.set(modelState.model_type, styleElement);
+    this.styleElementsByModelType.set(modelType, styleElement);
   }
 
-  ensurePlugin(modelState) {
-    const scriptText = modelState.ui.script_js;
+  ensurePlugin(modelType) {
+    const resources = this.getResources(modelType);
+    const scriptText = resources?.script_js;
     if (!scriptText) {
       return Promise.resolve(null);
     }
 
-    const existingPluginPromise = this.pluginPromisesByModelType.get(modelState.model_type);
+    const existingPluginPromise = this.pluginPromisesByModelType.get(modelType);
     if (existingPluginPromise !== undefined) {
       return existingPluginPromise;
     }
 
     const blob = new Blob([scriptText], { type: 'text/javascript' });
     const objectUrl = URL.createObjectURL(blob);
-    this.pluginUrlsByModelType.set(modelState.model_type, objectUrl);
+    this.pluginUrlsByModelType.set(modelType, objectUrl);
 
     const pluginPromise = import(objectUrl)
       .then((module) => module.default ?? module)
       .catch((error) => {
-        console.error(`Failed to load model UI plugin for ${modelState.model_type}`, error);
+        console.error(`Failed to load model UI plugin for ${modelType}`, error);
         return null;
       });
 
-    this.pluginPromisesByModelType.set(modelState.model_type, pluginPromise);
+    this.pluginPromisesByModelType.set(modelType, pluginPromise);
     return pluginPromise;
   }
 }
@@ -226,7 +239,8 @@ class GenericModelOverlay {
   }
 
   async update(modelState) {
-    this.plugin = await this.uiPluginManager.ensureResources(modelState);
+    const uiResources = this.uiPluginManager.getResources(modelState.model_type) || {};
+    this.plugin = await this.uiPluginManager.ensureResources(modelState.model_type);
     const coordinate = ol.proj.fromLonLat([modelState.map_position.lon, modelState.map_position.lat]);
     this.feature.setGeometry(new ol.geom.Point(coordinate));
     this.popupOverlay.setPosition(coordinate);
@@ -266,7 +280,7 @@ class GenericModelOverlay {
       });
       this.markerElement.innerHTML = indicatorHtml || '';
     } else {
-      this.markerElement.innerHTML = renderTemplate(modelState.ui.indicator_html, this.templateData) || '<div class="model-indicator default-indicator"></div>';
+      this.markerElement.innerHTML = renderTemplate(uiResources.indicator_html, this.templateData) || '<div class="model-indicator default-indicator"></div>';
     }
 
     if (this.plugin?.renderTooltip !== undefined) {
@@ -275,7 +289,7 @@ class GenericModelOverlay {
         templateData: this.templateData,
       }) || '';
     } else {
-      this.popupCard.innerHTML = renderTemplate(modelState.ui.tooltip_html, this.templateData) || `
+      this.popupCard.innerHTML = renderTemplate(uiResources.tooltip_html, this.templateData) || `
         <div class="simulation-popup-header">
           <span class="simulation-popup-title">${modelState.display_name}</span>
           <button type="button" class="simulation-popup-close" aria-label="Close popup">x</button>
@@ -413,6 +427,7 @@ class UI {
     this.followVehicle = false;
     this.suppressMapClicksUntil = 0;
     this.latestVehicleCoordinate = null;
+    this.latestSimulationState = null;
     this.overlaysByModelId = new Map();
     this.uiPluginManager = new ModelUiResourceManager();
     this.centerVehicleButton = document.getElementById('center_vehicle_button');
@@ -568,7 +583,8 @@ class UI {
   }
 
   async renderModelOverview(modelState) {
-    const plugin = await this.uiPluginManager.ensureResources(modelState);
+    const uiResources = this.uiPluginManager.getResources(modelState.model_type) || {};
+    const plugin = await this.uiPluginManager.ensureResources(modelState.model_type);
     let templateData = createTemplateData(modelState);
     if (plugin?.extendTemplateData !== undefined) {
       const extraTemplateData = plugin.extendTemplateData({
@@ -589,7 +605,7 @@ class UI {
         templateData,
       }) || '';
     } else {
-      wrapper.innerHTML = renderTemplate(modelState.ui.overview_html, templateData) || `
+      wrapper.innerHTML = renderTemplate(uiResources.overview_html, templateData) || `
         <article class="model-card">
           <header class="model-card-header">
             <strong class="model-card-title">${modelState.display_name}</strong>
@@ -636,7 +652,15 @@ class UI {
     }
   }
 
+  async handleModelUiResourcesUpdate(modelUiResources) {
+    this.uiPluginManager.registerResources(modelUiResources);
+    if (this.latestSimulationState !== null) {
+      await this.syncModels(this.latestSimulationState.models || []);
+    }
+  }
+
   async handleSimulationStateUpdate(simulationState) {
+    this.latestSimulationState = simulationState;
     this.controlMenu.handleSimulationStateUpdate(simulationState);
     await this.syncModels(simulationState.models || []);
 
@@ -677,8 +701,19 @@ class WebSocketConnection {
     });
 
     this.socket.addEventListener('message', (event) => {
-      const simulationState = JSON.parse(event.data).simulation_state;
-      this.ui.handleSimulationStateUpdate(simulationState);
+      const payload = JSON.parse(event.data);
+      if (payload.type !== 'event') {
+        return;
+      }
+
+      if (payload.event === 'model_ui_resources') {
+        this.ui.handleModelUiResourcesUpdate(payload.model_ui_resources);
+        return;
+      }
+
+      if (payload.event === 'simulation_state') {
+        this.ui.handleSimulationStateUpdate(payload.simulation_state);
+      }
     });
   }
 }

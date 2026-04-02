@@ -42,6 +42,7 @@ class Websocket:
     async def websocket_handler(self, websocket: Any) -> None:
         logger.info("WebSocket client connected")
         self.websocket = websocket
+        await self.publish_model_ui_resources()
         async for message in websocket:
             logger.debug("Received WebSocket message: %s", message)
             await websocket.send(self.handle_message(message))
@@ -85,6 +86,16 @@ class Websocket:
                 "type": "event",
                 "event": "simulation_state",
                 "simulation_state": simulation_state
+            }
+            json_dump = json.dumps(obj)
+            await self.websocket.send(json_dump)
+
+    async def publish_model_ui_resources(self) -> None:
+        if self.websocket is not None:
+            obj = {
+                "type": "event",
+                "event": "model_ui_resources",
+                "model_ui_resources": self.simulation_environment.get_model_ui_resources(),
             }
             json_dump = json.dumps(obj)
             await self.websocket.send(json_dump)

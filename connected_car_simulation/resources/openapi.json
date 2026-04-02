@@ -80,6 +80,23 @@
                 }
             }
         },
+        "/api/actions/get_model_ui_resources": {
+            "get": {
+                "summary": "Get static model UI resources",
+                "responses": {
+                    "200": {
+                        "description": "Static UI resources grouped by model type.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ModelUiResources"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/actions/get_route_information": {
             "get": {
                 "summary": "Get route metadata",
@@ -352,6 +369,12 @@
                     "script_js"
                 ]
             },
+            "ModelUiResources": {
+                "type": "object",
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/ModelOverview"
+                }
+            },
             "SimulationModelState": {
                 "type": "object",
                 "properties": {
@@ -370,17 +393,13 @@
                     },
                     "map_position": {
                         "$ref": "#/components/schemas/Coordinates"
-                    },
-                    "ui": {
-                        "$ref": "#/components/schemas/ModelOverview"
                     }
                 },
                 "required": [
                     "model_id",
                     "model_type",
                     "display_name",
-                    "state",
-                    "ui"
+                    "state"
                 ]
             },
             "SimulationState": {

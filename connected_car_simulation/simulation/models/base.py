@@ -61,6 +61,15 @@ class SimulationModel(ABC):
     def script_module(self) -> Optional[str]:
         return None
 
+    def get_ui_resources(self) -> Dict[str, Optional[str]]:
+        return {
+            "overview_html": self.html_overview(),
+            "indicator_html": self.html_indicator(),
+            "tooltip_html": self.html_tooltip(),
+            "style_css": self.css_styles(),
+            "script_js": self.script_module(),
+        }
+
     def get_simulation_state(self, route: Route) -> Dict[str, Any]:
         state = self.get_state()
         map_position = self._get_map_position(route, state)
@@ -70,13 +79,6 @@ class SimulationModel(ABC):
             "display_name": self.display_name,
             "state": state,
             "map_position": map_position,
-            "ui": {
-                "overview_html": self.html_overview(),
-                "indicator_html": self.html_indicator(),
-                "tooltip_html": self.html_tooltip(),
-                "style_css": self.css_styles(),
-                "script_js": self.script_module(),
-            },
         }
 
     def _get_map_position(self, route: Route, state: Dict[str, Any]) -> Optional[Dict[str, float]]:
